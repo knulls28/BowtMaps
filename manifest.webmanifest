@@ -41,5 +41,45 @@
       "type": "image/svg+xml",
       "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Hyrule Overworld",
+      "short_name": "Overworld",
+      "description": "Explore the full Hyrule Kingdom map",
+      "url": "/?list=map_locations",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Shrines & Towers",
+      "short_name": "Shrines",
+      "description": "Find Ancient Shrines and Sheikah Towers",
+      "url": "/?preset=shrines",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Korok Seeds",
+      "short_name": "Koroks",
+      "description": "Find Korok Seed puzzle locations",
+      "url": "/?preset=koroks",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
   ]
 }

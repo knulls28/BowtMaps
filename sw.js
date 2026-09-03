@@ -4,6 +4,7 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
+  '/manifest.json',
   '/icon.svg',
   '/zelda_logo.svg',
   '/pwa-192x192.png',

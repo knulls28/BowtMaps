@@ -16,15 +16,16 @@
 	<meta name="application-name" content="Breath of the Wild Object Map">
 	
 	<!-- PWA Web App Manifest -->
-	<link rel="manifest" href="manifest.webmanifest">
+	<link rel="manifest" href="/manifest.webmanifest">
+	<link rel="alternate" type="application/manifest+json" href="/manifest.json">
 	
 	<!-- App & PWA Icons -->
-	<link rel="icon" type="image/svg+xml" href="icon.svg">
-	<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-	<link rel="icon" type="image/png" sizes="192x192" href="pwa-192x192.png">
-	<link rel="icon" type="image/png" sizes="512x512" href="pwa-512x512.png">
-	<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-	<link rel="apple-touch-icon" href="apple-touch-icon.png">
+	<link rel="icon" type="image/svg+xml" href="/icon.svg">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png">
+	<link rel="icon" type="image/png" sizes="512x512" href="/pwa-512x512.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 	
 	<script src="jquery-1.12.0.min.js"></script>
 	<link rel="stylesheet" href="leaflet.css" />
@@ -1337,6 +1338,75 @@
 			box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 		}
 
+		/* Install & Shortcut Modal Styling */
+		.install-tab-btn {
+			flex: 1;
+			background: #19222f;
+			border: 1px solid #28374d;
+			color: #94a3b8;
+			padding: 7px 8px;
+			font-size: 11.5px;
+			font-weight: 600;
+			border-radius: 6px;
+			cursor: pointer;
+			text-align: center;
+			transition: all 0.15s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 5px;
+		}
+		.install-tab-btn.active {
+			background: rgba(56, 189, 248, 0.16);
+			border-color: #38bdf8;
+			color: #38bdf8;
+		}
+		.install-tab-btn:hover:not(.active) {
+			background: #202d3f;
+			color: #e2e8f0;
+		}
+		.install-step-card {
+			background: #0f141c;
+			border: 1px solid #233044;
+			border-radius: 8px;
+			padding: 12px;
+			margin-bottom: 10px;
+		}
+		.install-step-title {
+			font-size: 12px;
+			font-weight: 700;
+			color: #7dd3fc;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			margin-bottom: 6px;
+		}
+		.install-step-desc {
+			font-size: 12px;
+			color: #cbd5e1;
+			line-height: 1.55;
+			margin: 0;
+		}
+		.install-badge-key {
+			display: inline-flex;
+			align-items: center;
+			padding: 1px 6px;
+			border-radius: 4px;
+			background: #1e293b;
+			border: 1px solid #334155;
+			color: #38bdf8;
+			font-family: ui-monospace, monospace;
+			font-size: 11px;
+			font-weight: 600;
+		}
+		.install-iframe-banner {
+			background: rgba(245, 158, 11, 0.12);
+			border: 1px solid rgba(245, 158, 11, 0.4);
+			border-radius: 8px;
+			padding: 12px 14px;
+			margin-bottom: 14px;
+		}
+
 		/* Badges */
 		
 		/* Offline Connectivity Toast */
@@ -1928,10 +1998,14 @@
 					</div>
 					<div class="app-title-actions">
 						<span id="headerActiveBadge" class="header-active-badge" style="display: none;">0 active</span>
-						<button id="pwaInstallBtn" class="btn btn-pwa-install" title="Install Breath of the Wild Map App" aria-label="Install App" style="display: none; padding: 4px 8px; font-size: 11px; align-items: center; gap: 4px; border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.12); color: #38bdf8;">
+						<button id="pwaInstallBtn" class="btn btn-pwa-install" title="Install App or Create Desktop Shortcut with Zelda Logo" aria-label="Install App" style="display: inline-flex; padding: 4px 8px; font-size: 11px; align-items: center; gap: 4px; border-color: rgba(56, 189, 248, 0.45); background: rgba(56, 189, 248, 0.12); color: #38bdf8;">
 							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-							<span>Install</span>
+							<span>Install App</span>
 						</button>
+						<a id="popOutTabBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn desktop-only-btn" title="Open in Dedicated Browser Tab (Enables Full App Installation & Shortcuts)" style="padding: 4px 7px; font-size: 11px; text-decoration: none; color: #94a3b8; display: inline-flex; align-items: center; gap: 4px;">
+							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+							<span>New Tab</span>
+						</a>
 						<button id="shortcutsBtn" class="btn desktop-only-btn" title="Keyboard Shortcuts" style="padding: 4px 7px; font-size: 11px;">
 							<span>⌨ Hotkeys</span>
 						</button>
@@ -2111,24 +2185,122 @@
 		</div>
 	</div>
 
-	<!-- iOS PWA Install Guide Modal -->
-	<div id="iosInstallModalOverlay" class="shortcuts-modal-overlay">
-		<div class="shortcuts-modal" style="max-width: 400px;">
+	<!-- Universal PWA Install & Shortcut Guide Modal -->
+	<div id="installModalOverlay" class="shortcuts-modal-overlay">
+		<div class="shortcuts-modal" style="max-width: 480px; max-height: 90vh; display: flex; flex-direction: column;">
 			<div class="shortcuts-header">
 				<div style="display: flex; align-items: center; gap: 8px;">
-					<img src="zelda_logo.svg" alt="Breath of the Wild Logo" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5));" referrerPolicy="no-referrer" />
-					<h3>Install on iPhone / iPad</h3>
+					<img src="/zelda_logo.svg" alt="Breath of the Wild Logo" style="width: 22px; height: 22px; filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.5));" referrerPolicy="no-referrer" />
+					<h3 style="margin: 0; font-size: 14px;">Install App & Create Shortcut</h3>
 				</div>
-				<button type="button" id="closeIosInstallModal" class="shortcuts-close-btn" aria-label="Close Install Guide">✕</button>
+				<button type="button" id="closeInstallModal" class="shortcuts-close-btn" aria-label="Close Install Guide">✕</button>
 			</div>
-			<div style="padding: 18px 20px; font-size: 13px; color: #cbd5e1; line-height: 1.6;">
-				<p style="margin: 0 0 14px 0;">To install <strong>Breath of the Wild Object Map</strong> with its custom Sheikah emblem on your Home Screen:</p>
-				<ol style="margin: 0 0 16px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-					<li>Tap the <strong>Share</strong> icon <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; display: inline-block; color: #38bdf8;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> in Safari's bottom toolbar.</li>
-					<li>Scroll down and tap <strong>Add to Home Screen</strong> <span style="color: #38bdf8; font-weight: bold;">(+)</span>.</li>
-					<li>Tap <strong>Add</strong> in the top-right corner to launch in full-screen standalone mode.</li>
-				</ol>
-				<button type="button" id="dismissIosGuideBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 8px 14px;">Got It</button>
+			
+			<div style="padding: 16px 20px; overflow-y: auto; flex: 1;">
+				<!-- Embedded Iframe Notice -->
+				<div id="installIframeNotice" class="install-iframe-banner" style="display: none;">
+					<div style="display: flex; align-items: center; gap: 6px; font-weight: 700; color: #fbbf24; font-size: 12.5px; margin-bottom: 4px;">
+						<span>⚠️</span>
+						<span>Embedded Preview Detected</span>
+					</div>
+					<p style="margin: 0 0 10px 0; color: #e2e8f0; font-size: 12px; line-height: 1.5;">
+						Web browsers block PWA installation and "Create shortcut" inside embedded frames. Open this map directly in its own browser tab to install it with the custom Zelda icon:
+					</p>
+					<a id="modalOpenTabLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 8px 14px; font-size: 12.5px; font-weight: 600; text-decoration: none; box-sizing: border-box;">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+						<span>Open in New Tab to Install</span>
+					</a>
+				</div>
+
+				<!-- Direct Install Prompt Trigger (Active when beforeinstallprompt is ready) -->
+				<div id="nativeInstallPromptSection" style="display: none; margin-bottom: 14px;">
+					<button type="button" id="triggerNativeInstallBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 9px 14px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+						<span>Click to Prompt Browser Install</span>
+					</button>
+				</div>
+
+				<!-- Platform Tabs -->
+				<div style="display: flex; gap: 6px; margin-bottom: 14px;">
+					<button type="button" class="install-tab-btn active" data-tab="desktop">💻 Desktop (Chrome/Edge)</button>
+					<button type="button" class="install-tab-btn" data-tab="android">📱 Android</button>
+					<button type="button" class="install-tab-btn" data-tab="ios">🍎 iOS Safari</button>
+				</div>
+
+				<!-- Tab 1: Desktop (Chrome, Edge, Brave) -->
+				<div id="tabContentDesktop" class="install-tab-pane">
+					<div class="install-step-card">
+						<div class="install-step-title">
+							<span>⚡</span> Option 1: Address Bar Install Icon
+						</div>
+						<p class="install-step-desc">
+							When opened in a direct tab, click the <strong>Install</strong> icon <span class="install-badge-key">⤓</span> on the right edge of your browser's address bar (next to the bookmark star), then click <strong>Install</strong>.
+						</p>
+					</div>
+
+					<div class="install-step-card">
+						<div class="install-step-title">
+							<span>🔗</span> Option 2: "Create shortcut..." (Desktop Icon)
+						</div>
+						<p class="install-step-desc" style="margin-bottom: 6px;">
+							1. Click the browser menu <span class="install-badge-key">⋮</span> in the top-right corner.
+						</p>
+						<p class="install-step-desc" style="margin-bottom: 6px;">
+							2. Select <strong>Save and share</strong> → <strong>Create shortcut...</strong> (or <em>Install page as app</em>).
+						</p>
+						<p class="install-step-desc">
+							3. Check <strong style="color: #38bdf8;">☑ Open as window</strong> and click <strong>Create</strong>. This creates a desktop icon with the Zelda Sheikah emblem that launches standalone!
+						</p>
+					</div>
+				</div>
+
+				<!-- Tab 2: Android (Chrome / Samsung Internet) -->
+				<div id="tabContentAndroid" class="install-tab-pane" style="display: none;">
+					<div class="install-step-card">
+						<div class="install-step-title">
+							<span>📱</span> Add to Home Screen & App Drawer
+						</div>
+						<p class="install-step-desc" style="margin-bottom: 6px;">
+							1. Open this page directly in Google Chrome on your mobile device.
+						</p>
+						<p class="install-step-desc" style="margin-bottom: 6px;">
+							2. Tap the menu <span class="install-badge-key">⋮</span> in the top-right corner.
+						</p>
+						<p class="install-step-desc">
+							3. Tap <strong>Install app</strong> or <strong>Add to Home screen</strong> and confirm.
+						</p>
+					</div>
+				</div>
+
+				<!-- Tab 3: iOS Safari -->
+				<div id="tabContentIos" class="install-tab-pane" style="display: none;">
+					<div class="install-step-card">
+						<div class="install-step-title">
+							<span>🍎</span> Safari Home Screen Bookmark
+						</div>
+						<p class="install-step-desc" style="margin-bottom: 6px;">
+							1. In Safari, tap the <strong>Share</strong> button <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; display: inline-block; color: #38bdf8;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> at the bottom.
+						</p>
+						<p class="install-step-desc" style="margin-bottom: 6px;">
+							2. Scroll down and tap <strong>Add to Home Screen</strong> <span class="install-badge-key">+</span>.
+						</p>
+						<p class="install-step-desc">
+							3. Tap <strong>Add</strong> in the top-right corner to launch full-screen.
+						</p>
+					</div>
+				</div>
+
+				<!-- Direct URL Copy Section -->
+				<div style="margin-top: 12px; padding: 10px; background: #0b0e14; border: 1px solid #1f2937; border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+					<input type="text" id="directAppUrlInput" readonly style="flex: 1; background: transparent; border: none; color: #94a3b8; font-size: 11px; font-family: ui-monospace, monospace; outline: none;" />
+					<button type="button" id="copyAppUrlBtn" class="btn" style="padding: 3px 8px; font-size: 11px; white-space: nowrap;">
+						<span>📋 Copy URL</span>
+					</button>
+				</div>
+			</div>
+
+			<div style="padding: 10px 16px; background: #0f131a; border-top: 1px solid #222d3d; display: flex; justify-content: flex-end;">
+				<button type="button" id="dismissInstallModalBtn" class="btn" style="padding: 6px 14px; font-size: 12px;">Close</button>
 			</div>
 		</div>
 	</div>
@@ -2797,6 +2969,14 @@
 						sidebarList = new List("sidebar", { valueNames: ['itemName'] });
 					}
 
+					// Handle preset query param if present
+					var presetParam = urlParams.get('preset');
+					if (presetParam && presets[presetParam]) {
+						activePresets = [presetParam];
+						$('.preset-chip[data-preset="' + presetParam + '"]').addClass('active');
+						updatePresetBadges();
+					}
+
 					applyCombinedFilters();
 					$('#items-count-label').text(internal_names.length + ' items listed');
 					$('#loading-overlay').fadeOut(200);
@@ -3264,6 +3444,8 @@
 			} else if (e.key === 'Escape') {
 				if ($('#shortcutsModalOverlay').is(':visible')) {
 					closeShortcutsModal();
+				} else if ($('#installModalOverlay').is(':visible')) {
+					closeInstallModal();
 				} else if ($('#sidebar').hasClass('open')) {
 					closeMobileDrawer();
 				}
@@ -3326,31 +3508,105 @@
 		setTimeout(function() { scaleMapToFit(false); }, 350);
 		setTimeout(function() { scaleMapToFit(false); }, 750);
 
-		// PWA Service Worker & Install Flow
+		// PWA Service Worker & Multi-Platform Install / Shortcut Flow
 		var deferredPWAInstallPrompt = null;
 		var isIOSDevice = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+		var isAndroidDevice = /android/.test(window.navigator.userAgent.toLowerCase());
+		var isInIframe = (window.top !== window.self);
 		var isStandaloneApp = window.matchMedia('(display-mode: standalone)').matches || (window.navigator && window.navigator.standalone === true);
 
-		if (!isStandaloneApp) {
-			window.addEventListener('beforeinstallprompt', function(e) {
-				e.preventDefault();
-				deferredPWAInstallPrompt = e;
-				$('#pwaInstallBtn').css('display', 'inline-flex');
-			});
+		// Populate direct app URLs for Pop-Out & Install buttons
+		var directAppUrl = window.location.href;
+		$('#modalOpenTabLink, #popOutTabBtn').attr('href', directAppUrl);
+		$('#directAppUrlInput').val(directAppUrl);
 
-			if (isIOSDevice) {
-				$('#pwaInstallBtn').css('display', 'inline-flex');
+		$('#copyAppUrlBtn').click(function() {
+			var inputEl = document.getElementById('directAppUrlInput');
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(directAppUrl).then(function() {
+					$('#copyAppUrlBtn span').text('✓ Copied!');
+					setTimeout(function() { $('#copyAppUrlBtn span').text('📋 Copy URL'); }, 2000);
+				}).catch(function() {
+					inputEl.select();
+					document.execCommand('copy');
+					$('#copyAppUrlBtn span').text('✓ Copied!');
+					setTimeout(function() { $('#copyAppUrlBtn span').text('📋 Copy URL'); }, 2000);
+				});
+			} else {
+				inputEl.select();
+				document.execCommand('copy');
+				$('#copyAppUrlBtn span').text('✓ Copied!');
+				setTimeout(function() { $('#copyAppUrlBtn span').text('📋 Copy URL'); }, 2000);
+			}
+		});
+
+		if (isStandaloneApp) {
+			$('#pwaInstallBtn, #popOutTabBtn').hide();
+		} else {
+			$('#pwaInstallBtn').css('display', 'inline-flex');
+			if (isInIframe) {
+				$('#popOutTabBtn').css('display', 'inline-flex');
 			}
 		}
 
+		window.addEventListener('beforeinstallprompt', function(e) {
+			e.preventDefault();
+			deferredPWAInstallPrompt = e;
+			$('#pwaInstallBtn').css('display', 'inline-flex');
+			$('#nativeInstallPromptSection').show();
+		});
+
 		window.addEventListener('appinstalled', function() {
-			$('#pwaInstallBtn').hide();
+			$('#pwaInstallBtn, #popOutTabBtn').hide();
+			$('#installModalOverlay').fadeOut(150);
 			deferredPWAInstallPrompt = null;
 		});
 
+		function switchInstallTab(tabName) {
+			$('.install-tab-btn').removeClass('active');
+			$('.install-tab-btn[data-tab="' + tabName + '"]').addClass('active');
+			$('.install-tab-pane').hide();
+			if (tabName === 'desktop') $('#tabContentDesktop').show();
+			else if (tabName === 'android') $('#tabContentAndroid').show();
+			else if (tabName === 'ios') $('#tabContentIos').show();
+		}
+
+		$('.install-tab-btn').click(function() {
+			var tab = $(this).attr('data-tab');
+			switchInstallTab(tab);
+		});
+
+		function openInstallModal() {
+			if (isInIframe) {
+				$('#installIframeNotice').show();
+			} else {
+				$('#installIframeNotice').hide();
+			}
+
+			if (deferredPWAInstallPrompt) {
+				$('#nativeInstallPromptSection').show();
+			} else {
+				$('#nativeInstallPromptSection').hide();
+			}
+
+			if (isIOSDevice) {
+				switchInstallTab('ios');
+			} else if (isAndroidDevice) {
+				switchInstallTab('android');
+			} else {
+				switchInstallTab('desktop');
+			}
+
+			$('#installModalOverlay').fadeIn(150).css('display', 'flex');
+		}
+
+		function closeInstallModal() {
+			$('#installModalOverlay').fadeOut(150);
+		}
+
 		$('#pwaInstallBtn').click(function(e) {
 			e.preventDefault();
-			if (deferredPWAInstallPrompt) {
+			if (deferredPWAInstallPrompt && !isInIframe) {
 				deferredPWAInstallPrompt.prompt();
 				deferredPWAInstallPrompt.userChoice.then(function(choiceResult) {
 					if (choiceResult && choiceResult.outcome === 'accepted') {
@@ -3358,14 +3614,27 @@
 					}
 					deferredPWAInstallPrompt = null;
 				});
-			} else if (isIOSDevice) {
-				$('#iosInstallModalOverlay').fadeIn(150).css('display', 'flex');
+			} else {
+				openInstallModal();
 			}
 		});
 
-		$('#closeIosInstallModal, #dismissIosGuideBtn, #iosInstallModalOverlay').click(function(e) {
+		$('#triggerNativeInstallBtn').click(function() {
+			if (deferredPWAInstallPrompt) {
+				deferredPWAInstallPrompt.prompt();
+				deferredPWAInstallPrompt.userChoice.then(function(choiceResult) {
+					if (choiceResult && choiceResult.outcome === 'accepted') {
+						$('#pwaInstallBtn').hide();
+						closeInstallModal();
+					}
+					deferredPWAInstallPrompt = null;
+				});
+			}
+		});
+
+		$('#closeInstallModal, #dismissInstallModalBtn, #installModalOverlay').click(function(e) {
 			if (e.target === this) {
-				$('#iosInstallModalOverlay').fadeOut(150);
+				closeInstallModal();
 			}
 		});
 
