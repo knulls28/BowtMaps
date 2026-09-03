@@ -1,253 +1,2865 @@
-<html>
-	<head>
-		<title>Breath of the Wild Object Map</title>
-		<meta charset="utf-8">
-		<script src='jquery-1.12.0.min.js'></script>
-		<link rel="stylesheet" href="leaflet.css" />
-		<link rel="stylesheet" href="MarkerCluster.css" />
-		<link rel="stylesheet" href="chosen.min.css" />
-		<script src="leaflet.js"></script>
-		<script src="list.min.js"></script>
-		<script src="leaflet.markercluster.js"></script>
-		<script src="chosen.jquery.min.js"></script>
-		<style>
-		body {
-			background: #3e443b;
-			color: #dadad3;
-			font-family: sans-serif;
-			font-size: small;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+	<title>Breath of the Wild Object Map</title>
+	<meta name="description" content="Interactive object map for The Legend of Zelda: Breath of the Wild with markers, filters, presets, and clustering.">
+	<meta property="og:title" content="Breath of the Wild Object Map">
+	<meta property="og:description" content="Interactive object map for The Legend of Zelda: Breath of the Wild with markers, filters, presets, and clustering.">
+	
+	<script src="jquery-1.12.0.min.js"></script>
+	<link rel="stylesheet" href="leaflet.css" />
+	<link rel="stylesheet" href="MarkerCluster.css" />
+	<link rel="stylesheet" href="chosen.min.css" />
+	<script src="leaflet.js"></script>
+	<script src="list.min.js"></script>
+	<script src="leaflet.markercluster.js"></script>
+	<script src="chosen.jquery.min.js"></script>
+	<script src="botw_categorizer.js"></script>
+	
+	<style>
+		* {
+			box-sizing: border-box;
 		}
-		.leaflet-container {
-			background-color: rgba(255,0,0,0.0);
+		html, body {
+			margin: 0;
+			padding: 0;
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+			background: #111418;
+			color: #e2e8f0;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+			font-size: 13px;
+			-webkit-tap-highlight-color: transparent;
+			touch-action: none;
+			-webkit-touch-callout: none;
+			overscroll-behavior: none;
+		}
+		#app-container {
+			display: flex;
+			height: 100vh;
+			height: 100dvh;
+			width: 100vw;
+			overflow: hidden;
+			position: relative;
+			touch-action: none;
 		}
 		#botw_map {
-			display: inline-block;
-			height: 99%;
-			width: 70%;
+			flex: 1 1 auto;
+			height: 100%;
+			width: 100%;
+			min-width: 0;
+			min-height: 0;
+			background-color: #0b0f14;
+			position: relative;
+			touch-action: none !important;
+			-ms-touch-action: none !important;
+			overflow: hidden;
+			user-select: none;
+			-webkit-user-select: none;
 		}
+		#botw_map * {
+			touch-action: none !important;
+			-ms-touch-action: none !important;
+		}
+		.leaflet-container {
+			background-color: #0b0f14 !important;
+			outline: none;
+			width: 100%;
+			height: 100%;
+			touch-action: none !important;
+			-ms-touch-action: none !important;
+		}
+		.leaflet-pane,
+		.leaflet-map-pane,
+		.leaflet-tile-pane,
+		.leaflet-overlay-pane,
+		.leaflet-marker-pane,
+		.leaflet-image-layer {
+			touch-action: none !important;
+			-ms-touch-action: none !important;
+		}
+		.leaflet-bar,
+		.leaflet-touch .leaflet-bar {
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+			border-radius: 7px !important;
+			overflow: hidden;
+			border: 1px solid rgba(56, 189, 248, 0.3) !important;
+			backdrop-filter: blur(12px) !important;
+			-webkit-backdrop-filter: blur(12px) !important;
+			background: transparent !important;
+		}
+		.leaflet-bar a,
+		.leaflet-touch .leaflet-bar a {
+			background-color: rgba(16, 23, 36, 0.45) !important;
+			backdrop-filter: blur(12px) !important;
+			-webkit-backdrop-filter: blur(12px) !important;
+			color: #38bdf8 !important;
+			border-bottom: 1px solid rgba(56, 189, 248, 0.22) !important;
+			transition: background 0.15s, color 0.15s;
+		}
+		.leaflet-bar a:hover,
+		.leaflet-touch .leaflet-bar a:hover {
+			background-color: rgba(37, 51, 71, 0.7) !important;
+			color: #7dd3fc !important;
+		}
+		.leaflet-control-fit {
+			margin-top: 8px !important;
+		}
+		.leaflet-control-fit a {
+			display: flex !important;
+			align-items: center !important;
+			justify-content: center !important;
+			text-decoration: none;
+			border-bottom: 1px solid rgba(56, 189, 248, 0.22) !important;
+		}
+		.leaflet-control-fit a:last-child {
+			border-bottom: none !important;
+		}
+		
+		/* Sidebar Base & Collapse Transitions */
 		#sidebar {
-			display: inline-block;
-			height: 99%;
-			width: 29%;
-			overflow: scroll;
-			white-space: nowrap;
+			width: 380px;
+			min-width: 320px;
+			max-width: 440px;
+			height: 100%;
+			background: #141a23;
+			border-left: 1px solid #222d3d;
+			display: flex;
+			flex-direction: column;
+			z-index: 1000;
+			box-shadow: -6px 0 24px rgba(0,0,0,0.6);
+			flex-shrink: 0;
+			transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 		}
-		#sidebar > .list li, #sidebar > .list {
+		@media (min-width: 769px) {
+			#sidebar.collapsed {
+				width: 0 !important;
+				min-width: 0 !important;
+				max-width: 0 !important;
+				overflow: hidden !important;
+				border-left: none !important;
+				visibility: hidden;
+				pointer-events: none;
+			}
+		}
+		.sidebar-header {
+			padding: 14px 16px 10px 16px;
+			background: #10151d;
+			border-bottom: 1px solid #222d3d;
+			flex-shrink: 0;
+			position: relative;
+		}
+		.sidebar-header::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			height: 2px;
+			background: linear-gradient(90deg, #0284c7, #38bdf8, transparent);
+		}
+		.app-title {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 10px;
+		}
+		.app-title h1 {
+			margin: 0;
+			font-size: 15px;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+			color: #38bdf8;
+			display: flex;
+			align-items: center;
+			gap: 7px;
+			text-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+		}
+		.app-title-actions {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.sheikah-eye {
+			color: #0ea5e9;
+			font-size: 16px;
+			filter: drop-shadow(0 0 6px rgba(14, 165, 233, 0.6));
+		}
+		.header-active-badge {
+			background: rgba(14, 165, 233, 0.18);
+			color: #38bdf8;
+			border: 1px solid rgba(56, 189, 248, 0.35);
+			border-radius: 12px;
+			font-size: 10px;
+			font-weight: 700;
+			padding: 2px 7px;
+			display: inline-flex;
+			align-items: center;
+			letter-spacing: 0.2px;
+		}
+		.map-select {
+			width: 100%;
+			background: #19222f;
+			color: #f1f5f9;
+			border: 1px solid #28374d;
+			border-radius: 6px;
+			padding: 7px 10px;
+			font-size: 12.5px;
+			outline: none;
+			cursor: pointer;
+			transition: border-color 0.15s, box-shadow 0.15s;
+		}
+		.map-select:focus {
+			border-color: #38bdf8;
+			box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+		}
+		.actions-toolbar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			margin-top: 8px;
+		}
+		.quick-select-group {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.btn-sm {
+			padding: 5px 9px;
+			font-size: 11.5px;
+			border-radius: 6px;
+			gap: 4px;
+		}
+		.btn-options {
+			background: #161e2b;
+			border: 1px solid #28374d;
+			color: #94a3b8;
+			margin-left: auto;
+		}
+		.btn-options:hover, .btn-options.active {
+			background: #202d3f;
+			color: #38bdf8;
+			border-color: #38bdf8;
+		}
+		.options-active-badge {
+			background: #0284c7;
+			color: #ffffff;
+			font-size: 9.5px;
+			font-weight: 700;
+			padding: 1px 5px;
+			border-radius: 8px;
+			min-width: 16px;
+			text-align: center;
+		}
+		.options-chevron {
+			transition: transform 0.2s ease;
+		}
+		.btn-options.active .options-chevron {
+			transform: rotate(180deg);
+		}
+		.options-drawer {
+			margin-top: 10px;
+			padding: 12px;
+			background: #0d1218;
+			border: 1px solid #222d3d;
+			border-radius: 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 11px;
+			animation: optionsSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+		}
+		@keyframes optionsSlideDown {
+			from { opacity: 0; transform: translateY(-6px); }
+			to { opacity: 1; transform: translateY(0); }
+		}
+		.option-field {
+			display: flex;
+			flex-direction: column;
+			gap: 5px;
+		}
+		.option-header-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+		.option-label {
+			font-size: 10px;
+			text-transform: uppercase;
+			letter-spacing: 0.6px;
+			color: #94a3b8;
+			font-weight: 600;
+		}
+		.btn-link {
+			background: none;
+			border: none;
+			color: #38bdf8;
+			font-size: 10.5px;
+			cursor: pointer;
+			padding: 0;
+			text-decoration: underline;
+		}
+		.btn-link:hover {
+			color: #7dd3fc;
+		}
+		.preset-chips-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 5px;
+			max-height: 140px;
+			overflow-y: auto;
+			padding-right: 2px;
+			scrollbar-width: thin;
+			scrollbar-color: #28374d transparent;
+		}
+		.preset-chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			background: #171f2b;
+			border: 1px solid #28374d;
+			color: #cbd5e1;
+			border-radius: 12px;
+			padding: 3px 8px;
+			font-size: 11px;
+			cursor: pointer;
+			transition: all 0.12s ease;
+			user-select: none;
+		}
+		.preset-chip:hover {
+			background: #222f42;
+			border-color: #38bdf8;
+			color: #fff;
+		}
+		.preset-chip.active {
+			background: #0369a1;
+			border-color: #38bdf8;
+			color: #ffffff;
+			font-weight: 600;
+			box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+		}
+		.map-view-actions-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 6px;
+		}
+		.btn {
+			background: #1a2331;
+			border: 1px solid #2b394e;
+			color: #e2e8f0;
+			border-radius: 6px;
+			padding: 6px 12px;
+			font-size: 12px;
+			font-weight: 500;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			user-select: none;
+		}
+		.btn:hover:not(:disabled) {
+			background: #253347;
+			color: #fff;
+			border-color: #3b4d66;
+		}
+		.btn:active:not(:disabled) {
+			transform: scale(0.97);
+		}
+		.btn:disabled {
+			opacity: 0.4;
+			cursor: not-allowed;
+		}
+		.btn-primary {
+			background: #0284c7;
+			border-color: #0369a1;
+			color: #fff;
+			box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+		}
+		.btn-primary:hover:not(:disabled) {
+			background: #0369a1;
+			box-shadow: 0 2px 8px rgba(2, 132, 199, 0.45);
+		}
+		.search-box-wrapper {
+			position: relative;
+			display: flex;
+			align-items: center;
+		}
+		.search-input {
+			width: 100%;
+			background: #19222f;
+			border: 1px solid #28374d;
+			border-radius: 6px;
+			padding: 8px 30px 8px 32px;
+			color: #f1f5f9;
+			font-size: 13px;
+			outline: none;
+			transition: border-color 0.15s, box-shadow 0.15s;
+		}
+		.search-input:focus {
+			border-color: #38bdf8;
+			box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+		}
+		.search-icon {
+			position: absolute;
+			left: 10px;
+			top: 50%;
+			transform: translateY(-50%);
+			color: #64748b;
+			font-size: 13px;
+			pointer-events: none;
+		}
+		.search-clear-btn {
+			position: absolute;
+			right: 7px;
+			top: 50%;
+			transform: translateY(-50%);
+			background: transparent;
+			border: none;
+			color: #94a3b8;
+			font-size: 13px;
+			cursor: pointer;
+			padding: 2px 6px;
+			border-radius: 4px;
+			display: none;
+			line-height: 1;
+		}
+		.search-clear-btn:hover {
+			color: #f1f5f9;
+			background: #253347;
+		}
+		.search-kbd-hint {
+			position: absolute;
+			right: 8px;
+			top: 50%;
+			transform: translateY(-50%);
+			background: #10151d;
+			border: 1px solid #28374d;
+			border-radius: 4px;
+			font-size: 10px;
+			color: #64748b;
+			padding: 1px 5px;
+			font-family: ui-monospace, monospace;
+			pointer-events: none;
+		}
+		.sidebar-stats {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 8px 16px;
+			background: #0d1219;
+			border-bottom: 1px solid #1c2635;
+			font-size: 11px;
+			color: #94a3b8;
+			flex-shrink: 0;
+		}
+		.list-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow-y: auto;
+			padding: 6px 10px;
+			touch-action: pan-y !important;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: thin;
+			scrollbar-color: #28374d transparent;
+		}
+		.list-container::-webkit-scrollbar {
+			width: 6px;
+		}
+		.list-container::-webkit-scrollbar-thumb {
+			background: #28374d;
+			border-radius: 4px;
+		}
+		.list {
 			list-style-type: none;
 			padding: 0;
+			margin: 0;
 		}
-		#filter {
-			width: 300px;
+		.list li {
+			padding: 2px 0;
+			margin-bottom: 2px;
+			border-radius: 6px;
+			border: 1px solid transparent;
+			transition: background 0.1s ease, border-color 0.1s ease;
+		}
+		.list li:hover {
+			background: #19222f;
+			border-color: #28374d;
+		}
+		.list li.is-checked {
+			background: rgba(14, 165, 233, 0.08);
+			border-color: rgba(56, 189, 248, 0.3);
+		}
+		.list label {
+			display: flex;
+			align-items: flex-start;
+			gap: 7px;
+			cursor: pointer;
+			width: 100%;
+			padding: 5px 7px;
+			user-select: none;
+		}
+		.list input[type="checkbox"] {
+			accent-color: #38bdf8;
+			cursor: pointer;
+			width: 16px;
+			height: 16px;
+			min-width: 16px;
+			margin-top: 3px;
+		}
+		.marker-swatch {
+			width: 9px;
+			height: 9px;
+			min-width: 9px;
+			min-height: 9px;
+			border-radius: 50%;
+			display: inline-block;
+			margin-top: 5px;
+			flex-shrink: 0;
+			box-shadow: 0 0 4px rgba(0,0,0,0.6);
+		}
+		.item-count {
+			font-size: 10.5px;
+			background: #253347;
+			color: #94a3b8;
+			padding: 2px 6px;
+			border-radius: 10px;
+			margin-left: auto;
+			flex-shrink: 0;
+			align-self: flex-start;
+			margin-top: 2px;
+			font-family: ui-monospace, monospace;
+		}
+		.btn-item-focus {
+			background: transparent;
+			border: none;
+			color: #64748b;
+			padding: 3px 4px;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 11px;
+			line-height: 1;
+			opacity: 0;
+			transition: opacity 0.15s, color 0.15s, transform 0.15s;
+			margin-left: 3px;
+			flex-shrink: 0;
+			align-self: flex-start;
+			margin-top: 1px;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
+		.list li:hover .btn-item-focus {
+			opacity: 0.75;
+		}
+		.btn-item-focus:hover {
+			opacity: 1 !important;
+			color: #38bdf8 !important;
+			background: #253347;
+			transform: scale(1.1);
+		}
+		.list-empty-state {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 36px 16px;
+			text-align: center;
+			color: #94a3b8;
+		}
+		.list-empty-state .empty-icon {
+			font-size: 28px;
+			margin-bottom: 8px;
+			opacity: 0.6;
+		}
+		.list-empty-state .empty-title {
+			font-size: 14px;
+			font-weight: 600;
+			color: #f1f5f9;
+			margin-bottom: 4px;
+		}
+		.list-empty-state .empty-desc {
+			font-size: 12px;
+			color: #64748b;
+			margin-bottom: 14px;
+			max-width: 240px;
+			line-height: 1.4;
+		}
+		.item-content {
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			min-width: 0;
+			flex: 1 1 auto;
+		}
+		.item-header-row {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-wrap: wrap;
 		}
 		.display-name {
-			font-style: italic;
+			font-weight: 600;
+			color: #f1f5f9;
+			word-break: break-word;
+			line-height: 1.3;
 		}
 		.name-separator {
-			color: #8c8f87;
+			color: #475569;
+			font-size: 10px;
 		}
 		.internal-name {
-			font-family: "Courier New", Courier, monospace;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			font-size: 11px;
+			color: #94a3b8;
+			word-break: break-all;
 		}
+		
+		/* Category Filter Bar */
+		.category-filter-section {
+			margin-top: 8px;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+		.category-section-label {
+			font-size: 10.5px;
+			font-weight: 600;
+			color: #64748b;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.category-filter-bar {
+			display: flex;
+			gap: 6px;
+			overflow-x: auto;
+			padding: 2px 2px 6px 2px;
+			scrollbar-width: thin;
+			scrollbar-color: #334155 transparent;
+			-webkit-overflow-scrolling: touch;
+		}
+		.category-filter-bar::-webkit-scrollbar {
+			height: 4px;
+		}
+		.category-filter-bar::-webkit-scrollbar-thumb {
+			background: #334155;
+			border-radius: 4px;
+		}
+		.btn-cat-filter {
+			display: inline-flex;
+			align-items: center;
+			gap: 5px;
+			padding: 4px 10px;
+			font-size: 11px;
+			font-weight: 500;
+			background: #182232;
+			color: #94a3b8;
+			border: 1px solid #283548;
+			border-radius: 14px;
+			white-space: nowrap;
+			cursor: pointer;
+			transition: all 0.15s ease;
+			user-select: none;
+			flex-shrink: 0;
+		}
+		.btn-cat-filter:hover {
+			background: #222f42;
+			color: #e2e8f0;
+			border-color: #38bdf8;
+		}
+		.btn-cat-filter.active {
+			background: #0284c7;
+			color: #ffffff;
+			border-color: #38bdf8;
+			font-weight: 600;
+			box-shadow: 0 1px 4px rgba(2, 132, 199, 0.4);
+		}
+		.btn-cat-filter .cat-count {
+			font-size: 10px;
+			opacity: 0.85;
+			background: rgba(0, 0, 0, 0.3);
+			padding: 1px 5px;
+			border-radius: 8px;
+			font-weight: normal;
+		}
+
+		/* Category Badges */
+		.category-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 3px;
+			font-size: 10px;
+			font-weight: 600;
+			padding: 1.5px 6px;
+			border-radius: 4px;
+			text-transform: uppercase;
+			letter-spacing: 0.3px;
+			flex-shrink: 0;
+			white-space: nowrap;
+			line-height: 1.4;
+		}
+		.cat-enemies { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); }
+		.cat-weapons { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
+		.cat-chests { background: rgba(234, 179, 8, 0.18); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.35); }
+		.cat-koroks { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+		.cat-materials { background: rgba(132, 204, 22, 0.18); color: #a3e635; border: 1px solid rgba(132, 204, 22, 0.35); }
+		.cat-dungeons { background: rgba(6, 182, 212, 0.18); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.35); }
+		.cat-towns { background: rgba(139, 92, 246, 0.18); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.35); }
+		.cat-field { background: rgba(20, 184, 166, 0.18); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.35); }
+		.cat-dlc { background: rgba(236, 72, 153, 0.18); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.35); }
+		.cat-system { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.35); }
+		
 		.itemName {
 			display: none;
 		}
-		.div-icon0 { border-radius: 50%; border: 1px solid #00FFFF; background: rgba(0,255,255,0.25)}
-		.div-icon1 { border-radius: 50%; border: 1px solid #FFFF00; background: rgba(255,255,0,0.25) }
-		.div-icon2 { border-radius: 50%; border: 1px solid #FF00FF; background: rgba(255,0,255,0.25) }
-		.div-icon3 { border-radius: 50%; border: 1px solid #FF6060; background: rgba(255,96,96,0.25) }
-		.div-icon4 { border-radius: 50%; border: 1px solid #60FF60; background: rgba(96,255,96,0.25) }
-		.div-icon5 { border-radius: 50%; border: 1px solid #6030FF; background: rgba(96,48,255,0.25) }
-		.div-icon6 { border-radius: 50%; border: 1px solid #40C0FF; background: rgba(64,192,255,0.25) }
-		.div-icon7 { border-radius: 50%; border: 1px solid #C0FF40; background: rgba(192,255,64,0.25) }
-		.div-icon8 { border-radius: 50%; border: 1px solid #FF40C0; background: rgba(255,64,192,0.25) }
-		.div-icon9 { border-radius: 50%; border: 1px solid #FFC040; background: rgba(255,192,64,0.25) }
-		.div-icon10 { border-radius: 50%; border: 1px solid #40FFC0; background: rgba(64,255,192,0.25) }
-		.div-icon11 { border-radius: 50%; border: 1px solid #C040FF; background: rgba(192,64,255,0.25) }
-		.div-icon12 { border-radius: 50%; border: 1px solid #FFFFFF; background: rgba(255,255,255,0.25) }
+		.sidebar-footer {
+			padding: 10px 14px;
+			background: #111418;
+			border-top: 1px solid #232a35;
+			font-size: 11px;
+			color: #64748b;
+			line-height: 1.4;
+			flex-shrink: 0;
+		}
+		.sidebar-footer a {
+			color: #38bdf8;
+			text-decoration: none;
+		}
+		.sidebar-footer a:hover {
+			text-decoration: underline;
+		}
+		
+		/* Leaflet Div Icons - Refined, sharp, and compact */
+		.div-icon0 { border-radius: 50%; border: 1.5px solid #00FFFF; background: rgba(0,255,255,0.5); box-shadow: 0 0 3px rgba(0,255,255,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon1 { border-radius: 50%; border: 1.5px solid #FFFF00; background: rgba(255,255,0,0.5); box-shadow: 0 0 3px rgba(255,255,0,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon2 { border-radius: 50%; border: 1.5px solid #FF00FF; background: rgba(255,0,255,0.5); box-shadow: 0 0 3px rgba(255,0,255,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon3 { border-radius: 50%; border: 1.5px solid #FF5050; background: rgba(255,80,80,0.5); box-shadow: 0 0 3px rgba(255,80,80,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon4 { border-radius: 50%; border: 1.5px solid #4ade80; background: rgba(74,222,128,0.5); box-shadow: 0 0 3px rgba(74,222,128,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon5 { border-radius: 50%; border: 1.5px solid #c084fc; background: rgba(192,132,252,0.5); box-shadow: 0 0 3px rgba(192,132,252,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon6 { border-radius: 50%; border: 1.5px solid #38bdf8; background: rgba(56,189,248,0.5); box-shadow: 0 0 3px rgba(56,189,248,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon7 { border-radius: 50%; border: 1.5px solid #a3e635; background: rgba(163,230,53,0.5); box-shadow: 0 0 3px rgba(163,230,53,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon8 { border-radius: 50%; border: 1.5px solid #f43f5e; background: rgba(244,63,94,0.5); box-shadow: 0 0 3px rgba(244,63,94,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon9 { border-radius: 50%; border: 1.5px solid #fbbf24; background: rgba(251,191,36,0.5); box-shadow: 0 0 3px rgba(251,191,36,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon10 { border-radius: 50%; border: 1.5px solid #2dd4bf; background: rgba(45,212,191,0.5); box-shadow: 0 0 3px rgba(45,212,191,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon11 { border-radius: 50%; border: 1.5px solid #e879f9; background: rgba(232,121,249,0.5); box-shadow: 0 0 3px rgba(232,121,249,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		.div-icon12 { border-radius: 50%; border: 1.5px solid #FFFFFF; background: rgba(255,255,255,0.6); box-shadow: 0 0 3px rgba(255,255,255,0.7), 0 1px 2px rgba(0,0,0,0.6); }
+		
 		.big-icon {
-			border-width: 2px;
+			border-radius: 50%;
 			text-align: center;
 			color: #fff;
-			text-shadow: 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000;
-			height: 18px;
-			line-height: 18px;
+			font-weight: 700;
+			text-shadow: 1px 0 2px #000, 0 -1px 2px #000, 0 1px 2px #000, -1px 0 2px #000;
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 		}
-		a {
-			color: #09f;
+
+		/* Dynamic Pin Size Variants */
+		/* Tiny Pin (5px) */
+		#botw_map.pin-size-tiny .leaflet-marker-icon:not(.big-icon) {
+			width: 5px !important;
+			height: 5px !important;
+			margin-left: -2.5px !important;
+			margin-top: -2.5px !important;
+			border-width: 1px !important;
 		}
-		</style>
-	</head>
-	<body>
-		<div id="botw_map"></div>
-		<div id="sidebar">
-			<div>
-				<select id="filter" data-placeholder="Filter by preset..." multiple></select><br>
-				<button id="selectAll" title="Select all filtered items" disabled>All</button><button id="selectNone" title="Deselect all filtered items">None</button>
-				<input type="text" class="search" title="Filter by name..." autocomplete="off"/>
-			</div>
-			<ul class="list"></ul>
-		</div>
-		<div>Note that many objects are dynamically generated and are not included in this data. For more BotW datamining, see my <a href="https://mrcheeze.github.io/">GitHub/Pastebin</a>. Also, more advanced functionality is available in <a href="https://objmap.zeldamods.org/">Leoetlino's object map</a>. For Tears of the Kingdom data, see Vetyst's <a href="https://vetyst.github.io/TotK-Object-Map/">TotK-Object-Map</a>.</div>
-		<script>
-			var presets = {"AttackUp":["Animal_Insect_G", "Item_Plant_G", "Item_Fruit_H", "Item_Mushroom_L",
-									   "Animal_Fish_E", "Item_FishGet_E", "Animal_Insect_K", "Animal_Fish_F", "Item_FishGet_F"],
-						   "MovingSpeed":["Animal_Insect_S", "Item_MushroomGet_D", "Item_Mushroom_D", "Item_PlantGet_M",
-										  "Item_Plant_M", "Animal_Insect_A", "Item_Plant_O", "Item_Fruit_E",
-										  "Item_PlantGet_O"],
-						   "Fireproof":["Animal_Insect_X"],
-						   "Cooking Pots":["Item_CookSet","Item_CookSet_PanOnly"],
-						   "Horses":["WildHorseCreateTag","WildHorseCreateTag01","WildHorseCreateTag02",
-									 "WildHorseCreateTag03","GameRomHorseBone","GameRomHorseNushi","GameRomHorseZelda","GameRomHorse00L"],
-						   "Overworld Bosses":["Enemy_Giant_Bone","Enemy_Giant_Bone_AllDay","Enemy_Giant_Junior","Enemy_Giant_Middle","Enemy_Giant_Senior",
-											   "Enemy_Golem_Fire","Enemy_Golem_Ice","Enemy_Golem_Junior","Enemy_Golem_Middle","Enemy_Golem_Senior",
-											   "Enemy_Lynel_Dark","Enemy_Lynel_Junior","Enemy_Lynel_Junior_Mountain","Enemy_Lynel_Middle","Enemy_Lynel_Senior",
-											   "Enemy_Sandworm","Enemy_Assassin_Senior"],
-						   "Treasure Chests":["TBox"],
-						   "DLC":["Aoc","HARD:"],
-						   "Permamently Used":['BreakableRock', 'DgnObj_WallCrack_C_01', 'DgnObj_WallCrack_Wind_A_02', 'Enemy_Assassin_Senior', 'Enemy_Ganon', 'Enemy_Guardian_Mini_Practice', 'Enemy_SiteBoss_Bow', 'Enemy_SiteBoss_Lsword', 'Enemy_SiteBoss_Spear', 'Enemy_SiteBoss_Sword', 'FldObj_AssassinPicture_A_01', 'FldObj_AssassinPicture_A_02', 'FldObj_BreakableRockDeathMT_A_01', 'FldObj_BreakableRockDeathMT_A_02', 'IceWall', 'IceWallRuins', 'IceWallRuins_Challenge', 'IceWall_100enemy', 'IceWall_Tower', 'Item_Enemy_02', 'Item_Enemy_05', 'Item_Enemy_26', 'Item_Enemy_27', 'Item_Enemy_28', 'Item_Enemy_29', 'Item_Enemy_30', 'Item_Enemy_31', 'Obj_AncientArrow_A_01', 'Obj_AncientArrow_B_01', 'Obj_AncientArrow_C_01', 'Obj_ArrowBundle_A_01', 'Obj_ArrowBundle_A_02', 'Obj_ArrowBundle_A_10', 'Obj_ArrowNormal_A_01', 'Obj_BombArrow_A_01', 'Obj_BombArrow_A_02', 'Obj_BombArrow_A_03', 'Obj_BombArrow_A_04', 'Obj_CursedStatue', 'Obj_DungeonClearSeal', 'Obj_ElectricArrow_A_01', 'Obj_ElectricArrow_A_02', 'Obj_ElectricArrow_A_03', 'Obj_ElectricArrow_B_01', 'Obj_FireArrow_A_01', 'Obj_FireArrow_A_02', 'Obj_FireArrow_A_03', 'Obj_HeartUtuwa_A_01', 'Obj_HeroSoul_Gerudo', 'Obj_HeroSoul_Goron', 'Obj_HeroSoul_Rito', 'Obj_HeroSoul_Zora', 'Obj_IceArrow_A_01', 'Obj_IceArrow_A_02', 'Obj_IceArrow_A_03', 'Obj_KorokNuts', 'Obj_Maracas', 'Obj_RockBroken_A_02', 'Obj_StaminaUtuwa_A_01', 'Obj_ThunderRock', 'Obj_WarpDLC', 'PutRupee', 'PutRupee_Blue', 'PutRupee_Gold', 'PutRupee_Purple', 'PutRupee_Red', 'PutRupee_Silver', 'RemainsFire_Drone_A_01', 'TBox_Field_Enemy', 'TBox_Field_Iron', 'TBox_Field_Iron_NoReaction', 'TBox_Field_Iron_NoReaction_Aoc', 'TBox_Field_Iron_NoReaction_Aoc_long', 'TBox_Field_Stone', 'TBox_Field_Stone_NoReaction', 'TBox_Field_Wood', 'TreasureSpot_00', 'TwnObj_HyruleCastleObject_Wallcrack_Before_A_01', 'TwnObj_HyruleCity_Tower_WallCrack_A_01', 'VolcanoEruptionField', 'WallCrack', 'WallCrack_Wind', 'Weapon_Spear_049', 'Weapon_Sword_070', 'FldObj_RuinGuardianSand_A_Dynamic', 'FldObj_RuinGuardianSnow_A_Dynamic', 'FldObj_RuinGuardian_A_Dynamic','BM_Relief', 'DgnObj_AncientReactor_B_01', 'DgnObj_AncientReactor_B_01_on', 'DgnObj_DownloadTerminal_A_01', 'DgnObj_DungeonEntranceSP', 'DgnObj_DungeonEntranceSP_Far', 'DgnObj_EntranceTerminalSP', 'DgnObj_EntranceTerminal_A_01', 'DgnObj_RemainsLithogragh_A_02', 'DgnObj_RemainsLithograph_A_01', 'DgnObj_RemainsTerminalBody_A', 'FldObj_DownloadTerminal_A_01', 'FldObj_Terminal_A_01', 'Mannequin_001_Head', 'Mannequin_001_Lower', 'Mannequin_001_Upper', 'Mannequin_002_Head', 'Mannequin_002_Lower', 'Mannequin_002_Upper', 'Mannequin_003_Head', 'Mannequin_003_Lower', 'Mannequin_003_Upper', 'Mannequin_004_Head', 'Mannequin_004_Lower', 'Mannequin_004_Upper', 'Mannequin_005_Head', 'Mannequin_005_Lower', 'Mannequin_005_Upper', 'Mannequin_006_Head', 'Mannequin_006_Lower', 'Mannequin_006_Upper', 'Mannequin_007_Head', 'Mannequin_007_Lower', 'Mannequin_007_Upper', 'Mannequin_008_Head', 'Mannequin_008_Lower', 'Mannequin_008_Upper', 'Mannequin_009_Upper', 'Npc_HiddenKorokFly', 'Npc_HiddenKorokGround', 'ShutterKey', 'SwitchCandlestickAncient', 'SwitchCandlestickAncientOn', 'TBox_Dungeon_Iron', 'TBox_Dungeon_Iron_050', 'TBox_Dungeon_Iron_Hanged', 'TBox_Dungeon_Stone', 'TBox_Dungeon_Wood', 'TBox_Dungeon_Wood_AreaCulling', 'TBox_Field_Iron_GodTree', 'TwnObj_AncientCandlePoleRoofOff_A_01', 'TwnObj_AncientReactorCoreOff_A_01', 'TwnObj_AncientReactorCore_A_01', 'TwnObj_ArtifactObservationPostBed_A_01', 'TwnObj_GateKeeperBed_A_01', 'TwnObj_HeburaLodgeBed_A_01', 'TwnObj_HunterHouseBed_A_01', 'TwnObj_Village_KorokBed_A_01', 'TwnObj_Village_SakuradaBed_A_01', 'TwnObj_Village_ZoraFacilityBed_A_01']};
-			
-			var map = L.map('botw_map', {
-				preferCanvas: true,
-				minZoom: -4,
-				maxZoom: 4,
-				center: [0, 0],
-				zoom: -4,
-				crs: L.CRS.Simple
-			});
-			var southWest = map.unproject([-6000, 5000], 0);
-			var northEast = map.unproject([6000, -5000], 0);
-			var bounds = new L.LatLngBounds(southWest, northEast);
-			L.imageOverlay('BotW-Map-Grid.png', bounds).addTo(map);
-			map.setMaxBounds(bounds);
-			
-			var query = window.location.href.search('list=');
-			var locationfile = 'map_locations.js';
-			if (query > 0) {
-				locationfile = window.location.href.substr(window.location.href.search('list=')+5) + '.js';
+		#botw_map.pin-size-tiny .big-icon {
+			width: 13px !important;
+			height: 13px !important;
+			margin-left: -6.5px !important;
+			margin-top: -6.5px !important;
+			font-size: 8px !important;
+			line-height: 11px !important;
+			border-width: 1px !important;
+		}
+
+		/* Small Pin (7px) - Default */
+		#botw_map.pin-size-small .leaflet-marker-icon:not(.big-icon) {
+			width: 7px !important;
+			height: 7px !important;
+			margin-left: -3.5px !important;
+			margin-top: -3.5px !important;
+			border-width: 1.5px !important;
+		}
+		#botw_map.pin-size-small .big-icon {
+			width: 16px !important;
+			height: 16px !important;
+			margin-left: -8px !important;
+			margin-top: -8px !important;
+			font-size: 9px !important;
+			line-height: 13.5px !important;
+			border-width: 1.5px !important;
+		}
+
+		/* Medium Pin (10px) */
+		#botw_map.pin-size-medium .leaflet-marker-icon:not(.big-icon) {
+			width: 10px !important;
+			height: 10px !important;
+			margin-left: -5px !important;
+			margin-top: -5px !important;
+			border-width: 1.5px !important;
+		}
+		#botw_map.pin-size-medium .big-icon {
+			width: 20px !important;
+			height: 20px !important;
+			margin-left: -10px !important;
+			margin-top: -10px !important;
+			font-size: 10px !important;
+			line-height: 17px !important;
+			border-width: 1.5px !important;
+		}
+
+		/* Pin Size Control UI in Sidebar */
+		.pin-size-bar {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			background: #141920;
+			border: 1px solid #232a35;
+			border-radius: 6px;
+			padding: 4px 8px;
+			margin-bottom: 8px;
+		}
+		.pin-size-label {
+			font-size: 11px;
+			color: #94a3b8;
+			font-weight: 500;
+		}
+		.pin-size-toggle {
+			display: flex;
+			gap: 4px;
+		}
+		.btn-pin-size {
+			background: #1e293b;
+			border: 1px solid #334155;
+			color: #94a3b8;
+			border-radius: 4px;
+			padding: 2px 7px;
+			font-size: 11px;
+			cursor: pointer;
+			transition: all 0.12s ease;
+		}
+		.btn-pin-size:hover {
+			background: #273549;
+			color: #f1f5f9;
+		}
+		.btn-pin-size.active {
+			background: #0284c7;
+			border-color: #38bdf8;
+			color: #ffffff;
+			font-weight: 600;
+		}
+
+		/* Floating Top-Right Map Controls Group (Compass + Desktop Sidebar Toggle) */
+		.map-top-right-group {
+			position: absolute;
+			top: 14px;
+			right: 14px;
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			pointer-events: none;
+		}
+		.map-top-right-group > * {
+			pointer-events: auto;
+		}
+
+		/* Floating Desktop Sidebar Toggle */
+		.desktop-sidebar-toggle {
+			background: rgba(16, 23, 36, 0.45);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			border: 1px solid rgba(56, 189, 248, 0.3);
+			color: #f1f5f9;
+			border-radius: 8px;
+			padding: 7px 12px;
+			font-size: 12px;
+			font-weight: 600;
+			display: flex;
+			align-items: center;
+			gap: 7px;
+			cursor: pointer;
+			box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
+			transition: all 0.15s ease;
+			white-space: nowrap;
+		}
+		.desktop-sidebar-toggle:hover {
+			background: rgba(37, 51, 71, 0.7);
+			border-color: #38bdf8;
+			color: #38bdf8;
+		}
+		@media (max-width: 768px) {
+			.desktop-sidebar-toggle {
+				display: none !important;
 			}
-			$.getScript(locationfile, function() {
+		}
+
+		/* Floating Active Layers Bar on Map */
+		.active-layers-tray {
+			position: absolute;
+			top: 14px;
+			left: 50%;
+			transform: translateX(-50%);
+			z-index: 995;
+			display: none;
+			align-items: center;
+			gap: 6px;
+			background: rgba(16, 23, 36, 0.45);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			border: 1px solid rgba(56, 189, 248, 0.3);
+			border-radius: 20px;
+			padding: 4px 10px 4px 12px;
+			max-width: calc(100% - 370px);
+			overflow-x: auto;
+			box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+			scrollbar-width: none;
+			box-sizing: border-box;
+		}
+		.active-layers-tray::-webkit-scrollbar {
+			display: none;
+		}
+		.active-layers-count-label {
+			font-size: 11px;
+			font-weight: 700;
+			color: #38bdf8;
+			white-space: nowrap;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+		.active-chips-list {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			overflow-x: auto;
+			max-width: 520px;
+			scrollbar-width: none;
+		}
+		.active-chips-list::-webkit-scrollbar {
+			display: none;
+		}
+		.active-chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			background: rgba(25, 34, 49, 0.45);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(56, 189, 248, 0.25);
+			border-radius: 12px;
+			padding: 3px 8px 3px 7px;
+			font-size: 11px;
+			color: #f1f5f9;
+			white-space: nowrap;
+			flex-shrink: 0;
+		}
+		.active-chip .chip-name {
+			max-width: 130px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.active-chip .chip-remove-btn {
+			background: transparent;
+			border: none;
+			color: #94a3b8;
+			cursor: pointer;
+			font-size: 11px;
+			line-height: 1;
+			padding: 1px 3px;
+			border-radius: 50%;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			transition: color 0.12s;
+		}
+		.active-chip .chip-remove-btn:hover {
+			color: #f43f5e;
+		}
+		.btn-clear-tray {
+			background: rgba(239, 68, 68, 0.2);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(239, 68, 68, 0.4);
+			color: #fca5a5;
+			font-size: 10.5px;
+			font-weight: 600;
+			border-radius: 12px;
+			padding: 3px 8px;
+			cursor: pointer;
+			white-space: nowrap;
+			transition: background 0.15s, color 0.15s;
+			flex-shrink: 0;
+		}
+		.btn-clear-tray:hover {
+			background: rgba(239, 68, 68, 0.4);
+			color: #ffffff;
+		}
+
+		/* Compass Rose on Map */
+		.map-compass-badge {
+			width: 32px;
+			height: 32px;
+			border-radius: 50%;
+			background: rgba(16, 23, 36, 0.45);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			border: 1px solid rgba(56, 189, 248, 0.3);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+			color: #38bdf8;
+			font-size: 8.5px;
+			font-weight: 800;
+			user-select: none;
+			flex-shrink: 0;
+		}
+
+		/* Map floating coordinate HUD */
+		.map-coord-hud {
+			position: absolute;
+			bottom: 14px;
+			left: 14px;
+			background: rgba(16, 23, 36, 0.45);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			border: 1px solid rgba(56, 189, 248, 0.25);
+			border-radius: 8px;
+			padding: 4px 8px;
+			font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+			font-size: 11px;
+			color: #e2e8f0;
+			z-index: 990;
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+			display: flex;
+			align-items: center;
+			gap: 7px;
+			user-select: none;
+		}
+		.hud-badge {
+			background: rgba(14, 165, 233, 0.2);
+			color: #38bdf8;
+			border: 1px solid rgba(56, 189, 248, 0.35);
+			border-radius: 4px;
+			font-size: 9px;
+			font-weight: 700;
+			padding: 1px 4px;
+			letter-spacing: 0.5px;
+		}
+		.hud-coords {
+			color: #38bdf8;
+			font-weight: 600;
+		}
+		.hud-zoom {
+			color: #94a3b8;
+			font-size: 10.5px;
+		}
+		.hud-copy-btn {
+			background: rgba(30, 41, 59, 0.5);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(56, 189, 248, 0.25);
+			color: #94a3b8;
+			border-radius: 4px;
+			padding: 2px 6px;
+			font-size: 10px;
+			cursor: pointer;
+			transition: all 0.12s ease;
+		}
+		.hud-copy-btn:hover {
+			background: rgba(56, 189, 248, 0.35);
+			color: #f1f5f9;
+		}
+
+		/* Keyboard Shortcuts Modal */
+		.shortcuts-modal-overlay {
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.72);
+			backdrop-filter: blur(4px);
+			z-index: 3000;
+			display: none;
+			align-items: center;
+			justify-content: center;
+			padding: 16px;
+		}
+		.shortcuts-modal {
+			background: #141a23;
+			border: 1px solid #28374d;
+			border-radius: 12px;
+			width: 100%;
+			max-width: 440px;
+			box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+			overflow: hidden;
+			animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+		}
+		@keyframes modalPop {
+			from { transform: scale(0.95); opacity: 0; }
+			to { transform: scale(1); opacity: 1; }
+		}
+		.shortcuts-header {
+			padding: 12px 16px;
+			background: #0f131a;
+			border-bottom: 1px solid #222d3d;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+		.shortcuts-header h3 {
+			margin: 0;
+			font-size: 14px;
+			font-weight: 700;
+			color: #38bdf8;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.shortcuts-close-btn {
+			background: transparent;
+			border: none;
+			color: #94a3b8;
+			cursor: pointer;
+			font-size: 16px;
+			padding: 2px 6px;
+			border-radius: 4px;
+		}
+		.shortcuts-close-btn:hover {
+			color: #fff;
+			background: #253347;
+		}
+		.shortcuts-list {
+			padding: 14px 16px;
+			display: flex;
+			flex-direction: column;
+			gap: 9px;
+		}
+		.shortcut-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-size: 12.5px;
+			color: #e2e8f0;
+		}
+		.shortcut-row kbd {
+			background: #0d1219;
+			border: 1px solid #28374d;
+			border-radius: 4px;
+			padding: 2px 7px;
+			font-size: 11px;
+			font-family: ui-monospace, monospace;
+			color: #38bdf8;
+			font-weight: 600;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+		}
+		
+		/* Loading Overlay */
+		#loading-overlay {
+			position: absolute;
+			inset: 0;
+			background: rgba(11, 15, 20, 0.88);
+			backdrop-filter: blur(4px);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			z-index: 2000;
+			transition: opacity 0.25s ease;
+		}
+		.spinner {
+			width: 36px;
+			height: 36px;
+			border: 3px solid #1e293b;
+			border-top-color: #38bdf8;
+			border-radius: 50%;
+			animation: spin 0.8s linear infinite;
+			margin-bottom: 12px;
+		}
+		@keyframes spin {
+			to { transform: rotate(360deg); }
+		}
+		
+		/* Leaflet popup styling - Sheikah Card */
+		.leaflet-popup-content-wrapper {
+			background: rgba(16, 23, 36, 0.7) !important;
+			backdrop-filter: blur(14px) !important;
+			-webkit-backdrop-filter: blur(14px) !important;
+			color: #f1f5f9 !important;
+			border: 1px solid rgba(56, 189, 248, 0.35) !important;
+			border-radius: 8px !important;
+			box-shadow: 0 12px 28px rgba(0,0,0,0.55) !important;
+			max-width: 300px !important;
+			padding: 0 !important;
+			overflow: hidden !important;
+		}
+		.leaflet-popup-tip {
+			background: rgba(16, 23, 36, 0.7) !important;
+			backdrop-filter: blur(14px) !important;
+			-webkit-backdrop-filter: blur(14px) !important;
+			border: 1px solid rgba(56, 189, 248, 0.35) !important;
+		}
+		.leaflet-popup-content {
+			font-size: 12px;
+			line-height: 1.4;
+			margin: 0 !important;
+			padding: 10px 12px !important;
+		}
+		.popup-sheikah-card {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+		.popup-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 6px;
+		}
+		.popup-title {
+			font-weight: 700;
+			font-size: 13.5px;
+			color: #f1f5f9;
+			line-height: 1.25;
+		}
+		.popup-id-row {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			font-family: ui-monospace, monospace;
+			font-size: 11px;
+			color: #94a3b8;
+			background: rgba(13, 18, 25, 0.65);
+			backdrop-filter: blur(6px);
+			-webkit-backdrop-filter: blur(6px);
+			padding: 3px 6px;
+			border-radius: 4px;
+			border: 1px solid rgba(56, 189, 248, 0.2);
+		}
+		.popup-coords-row {
+			font-family: ui-monospace, monospace;
+			font-size: 11px;
+			color: #38bdf8;
+		}
+		.popup-actions {
+			display: flex;
+			gap: 5px;
+			margin-top: 4px;
+		}
+		.popup-btn {
+			flex: 1;
+			background: rgba(30, 41, 59, 0.5);
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			border: 1px solid rgba(56, 189, 248, 0.25);
+			color: #e2e8f0;
+			border-radius: 4px;
+			padding: 4px 6px;
+			font-size: 10.5px;
+			cursor: pointer;
+			text-align: center;
+			transition: background 0.12s;
+		}
+		.popup-btn:hover {
+			background: rgba(2, 132, 199, 0.5);
+			color: #38bdf8;
+		}
+
+		/* Mobile Elements: Hidden on Desktop */
+		.sidebar-backdrop {
+			display: none;
+		}
+		.mobile-map-bar {
+			display: none;
+		}
+		.mobile-drawer-bottom {
+			display: none;
+		}
+		.btn-close-drawer {
+			display: none;
+		}
+
+		/* =========================================
+		   MOBILE & TABLET RESPONSIVE STYLES
+		   ========================================= */
+		@media (max-width: 768px) {
+			#app-container {
+				position: relative;
+				width: 100vw;
+				height: 100vh;
+				height: 100dvh;
+				overflow: hidden;
+			}
+			#botw_map {
+				width: 100vw;
+				height: 100vh;
+				height: 100dvh;
+				flex: none;
+			}
+
+			/* Touch-friendly Leaflet controls */
+			.leaflet-top.leaflet-left {
+				top: 14px;
+				left: 14px;
+			}
+			.leaflet-control-fit {
+				display: none !important;
+			}
+			.leaflet-bar {
+				border-radius: 10px !important;
+				overflow: hidden;
+				border: 1px solid rgba(56, 189, 248, 0.3) !important;
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5) !important;
+				backdrop-filter: blur(12px) !important;
+				-webkit-backdrop-filter: blur(12px) !important;
+				background: transparent !important;
+			}
+			.leaflet-bar a {
+				width: 44px !important;
+				height: 44px !important;
+				line-height: 44px !important;
+				font-size: 20px !important;
+				background-color: rgba(16, 23, 36, 0.45) !important;
+				color: #f1f5f9 !important;
+				border-bottom: 1px solid rgba(56, 189, 248, 0.2) !important;
+				backdrop-filter: blur(12px) !important;
+				-webkit-backdrop-filter: blur(12px) !important;
+			}
+			.leaflet-bar a:hover, .leaflet-bar a:active {
+				background-color: rgba(2, 132, 199, 0.65) !important;
+				color: #ffffff !important;
+			}
+
+			/* Mobile Active Layers Tray Position - positioned cleanly below Leaflet zoom controls */
+			.active-layers-tray {
+				top: 112px;
+				left: 12px;
+				right: 12px;
+				transform: none;
+				max-width: calc(100% - 24px);
+				box-sizing: border-box;
+				padding: 4px 8px 4px 10px;
+			}
+			.active-chips-list {
+				max-width: calc(100% - 130px);
+			}
+
+			/* Floating Action Bar on Mobile Map */
+			.mobile-map-bar {
+				display: flex;
+				position: absolute;
+				bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+				left: 8px;
+				right: 8px;
+				z-index: 1000;
+				gap: 5px;
+				align-items: center;
+			}
+			.btn-mobile-icon {
+				min-height: 42px;
+				height: 42px;
+				padding: 0 9px;
+				border-radius: 21px;
+				background: rgba(16, 23, 36, 0.45);
+				backdrop-filter: blur(14px);
+				-webkit-backdrop-filter: blur(14px);
+				border: 1px solid rgba(56, 189, 248, 0.3);
+				color: #f1f5f9;
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+				gap: 4px;
+				flex-shrink: 0;
+			}
+			.btn-mobile-icon:hover, .btn-mobile-icon:active {
+				background: rgba(30, 45, 65, 0.7);
+			}
+			.btn-mobile-icon .btn-text {
+				font-size: 11px;
+				font-weight: 600;
+			}
+			.btn-mobile-main {
+				flex: 1;
+				min-height: 42px;
+				height: 42px;
+				border-radius: 21px;
+				background: rgba(2, 132, 199, 0.6);
+				backdrop-filter: blur(14px);
+				-webkit-backdrop-filter: blur(14px);
+				color: #ffffff;
+				border: 1px solid rgba(56, 189, 248, 0.6);
+				font-size: 12px;
+				font-weight: 600;
+				box-shadow: 0 4px 18px rgba(2, 132, 199, 0.3), 0 4px 14px rgba(0, 0, 0, 0.45);
+				gap: 6px;
+				padding: 0 10px;
+				min-width: 0;
+			}
+			.btn-mobile-main:hover, .btn-mobile-main:active {
+				background: rgba(2, 132, 199, 0.85);
+			}
+			.mobile-badge {
+				background: #ffffff;
+				color: #0369a1;
+				font-size: 11px;
+				font-weight: 700;
+				border-radius: 12px;
+				padding: 1px 7px;
+				min-width: 18px;
+				text-align: center;
+			}
+
+			/* Coordinate tracker position on mobile (sits cleanly above mobile action bar without overlapping) */
+			.map-coord-hud {
+				bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+				left: 10px;
+				font-size: 10px;
+				padding: 3px 7px;
+				background: rgba(16, 23, 36, 0.45);
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
+				z-index: 990;
+			}
+
+			/* Drawer Backdrop */
+			.sidebar-backdrop {
+				display: block;
+				position: fixed;
+				inset: 0;
+				background: rgba(0, 0, 0, 0.65);
+				backdrop-filter: blur(3px);
+				z-index: 1050;
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 0.25s ease;
+			}
+			.sidebar-backdrop.open {
+				opacity: 1;
+				pointer-events: auto;
+			}
+
+			/* Sidebar as Mobile Drawer */
+			#sidebar {
+				position: fixed;
+				top: 0;
+				right: 0;
+				bottom: 0;
+				width: 90vw;
+				max-width: 420px;
+				min-width: 0;
+				height: 100%;
+				height: 100dvh;
+				z-index: 1100;
+				transform: translateX(100%);
+				transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+				box-shadow: -8px 0 30px rgba(0, 0, 0, 0.8);
+				border-left: 1px solid #334155;
+			}
+			#sidebar.open {
+				transform: translateX(0);
+			}
+
+			/* Desktop-only button hidden on mobile header */
+			.desktop-only-btn {
+				display: none !important;
+			}
+
+			/* Drawer Close Button */
+			.btn-close-drawer {
+				display: inline-flex !important;
+				min-height: 38px;
+				padding: 4px 10px;
+				font-size: 12px;
+				font-weight: 600;
+				gap: 4px;
+				background: #273549;
+				border-color: #475569;
+				color: #f1f5f9;
+				border-radius: 6px;
+			}
+
+			/* Touch Target Sizing (>= 44px) */
+			.sidebar-header {
+				padding: 10px 12px 8px 12px;
+			}
+			.map-select {
+				min-height: 44px;
+				font-size: 13.5px;
+				padding: 10px 12px;
+			}
+			.actions-toolbar {
+				margin-top: 6px;
+			}
+			.actions-toolbar .btn {
+				min-height: 38px;
+				padding: 6px 10px;
+				font-size: 12px;
+			}
+			.btn-options {
+				min-height: 38px;
+				padding: 6px 10px;
+			}
+			.list-container {
+				padding: 6px 10px 84px 10px; /* leaves breathing room for the bottom confirmation button */
+			}
+			.options-drawer {
+				max-height: 340px;
+				overflow-y: auto;
+			}
+
+			/* Prevent iOS zoom on search input (font-size >= 16px) */
+			.search-input {
+				min-height: 42px;
+				font-size: 15px;
+				padding: 9px 30px 9px 34px;
+			}
+			.search-icon {
+				left: 11px;
+				font-size: 14px;
+			}
+
+			/* Mobile List Item Touch Ergonomics */
+			.list li {
+				margin-bottom: 5px;
+			}
+			.list label {
+				min-height: 44px;
+				padding: 8px 10px;
+				border-radius: 6px;
+				background: rgba(30, 41, 59, 0.45);
+				border: 1px solid rgba(51, 65, 85, 0.5);
+			}
+			.list label:active {
+				background: rgba(51, 65, 85, 0.9);
+			}
+			.list input[type="checkbox"] {
+				width: 22px;
+				height: 22px;
+				min-width: 22px;
+			}
+			.display-name {
+				font-size: 13px;
+			}
+			.internal-name {
+				font-size: 11px;
+			}
+			.item-count {
+				font-size: 11px;
+				padding: 3px 7px;
+			}
+
+			/* Drawer Bottom Sticky Action */
+			.mobile-drawer-bottom {
+				display: block;
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				right: 0;
+				z-index: 10;
+				padding: 8px 12px calc(10px + env(safe-area-inset-bottom, 0px)) 12px;
+				background: linear-gradient(180deg, rgba(20, 26, 35, 0.88) 0%, rgba(17, 20, 24, 0.98) 40%);
+				backdrop-filter: blur(10px);
+				border-top: 1px solid rgba(40, 55, 77, 0.7);
+			}
+			.btn-drawer-confirm {
+				width: 100%;
+				min-height: 44px;
+				height: 44px;
+				border-radius: 22px;
+				font-size: 13.5px;
+				font-weight: 600;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 8px;
+				box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+			}
+			.mobile-bottom-badge {
+				background: rgba(255, 255, 255, 0.2);
+				color: #ffffff;
+				font-size: 11px;
+				padding: 2px 8px;
+				border-radius: 12px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div id="app-container">
+		<!-- Backdrop for mobile drawer -->
+		<div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+		
+		<!-- Map Stage -->
+		<div id="botw_map" class="pin-size-medium">
+			<div id="loading-overlay">
+				<div class="spinner"></div>
+				<div id="loading-text" style="color: #38bdf8; font-weight: 500;">Loading Hyrule Object Map...</div>
+			</div>
+			
+			<!-- Floating Top-Right Map Controls Group (Compass + Desktop Sidebar Toggle) -->
+			<div class="map-top-right-group">
+				<div class="map-compass-badge" title="Map Oriented North">
+					<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+					<span>N</span>
+				</div>
+
+				<button id="desktopSidebarToggle" class="desktop-sidebar-toggle" title="Toggle Object Panel ( [ )" aria-label="Toggle Object Panel">
+					<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+					<span id="desktopToggleText">Hide Panel</span>
+				</button>
+			</div>
+
+			<!-- Floating Active Layers Tray -->
+			<div id="activeLayersTray" class="active-layers-tray">
+				<span class="active-layers-count-label">
+					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+					<span>Active (<strong id="activeLayersCount">0</strong>)</span>
+				</span>
+				<div id="activeChipsList" class="active-chips-list"></div>
+				<button type="button" id="btnClearTray" class="btn-clear-tray" title="Clear all active layers">Clear All</button>
+			</div>
+
+			<!-- Coordinate HUD -->
+			<div class="map-coord-hud" id="coord-hud">
+				<span class="hud-badge">POS</span>
+				<span class="hud-coords" id="coord-hud-text">X: 0 | Z: 0</span>
+				<span style="color: #475569;">•</span>
+				<span class="hud-zoom" id="coord-hud-zoom">100%</span>
+				<button type="button" class="hud-copy-btn" id="hudCopyBtn" title="Copy game coordinates to clipboard">Copy</button>
+			</div>
+			
+			<!-- Mobile Floating Quick-Controls Bar -->
+			<div id="mobile-map-bar" class="mobile-map-bar">
+				<button id="mobileScaleFrameBtn" class="btn btn-mobile-icon" title="Scale Map to Frame (Avoid Cropping)" aria-label="Scale Map to Frame">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+					<span class="btn-text">Frame</span>
+				</button>
+				<button id="mobileFitBtn" class="btn btn-mobile-icon" title="Fit Active Markers" aria-label="Fit Active Markers">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+					<span class="btn-text">Fit</span>
+				</button>
+				<button id="mobilePinSizeBtn" class="btn btn-mobile-icon" title="Change Pin Size (Tiny, Small, Medium)" aria-label="Change Pin Size">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>
+					<span class="btn-text" id="mobilePinSizeLabel">10px Pin</span>
+				</button>
+				<button id="mobileToggleBtn" class="btn btn-primary btn-mobile-main" title="Open Filter & Objects Panel" aria-label="Open Filter & Objects Panel">
+					<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+					<span>Filters</span>
+					<span id="mobileBadge" class="mobile-badge" style="display: none;">0</span>
+				</button>
+			</div>
+		</div>
+		
+		<!-- Objects & Filters Sidebar / Drawer -->
+		<div id="sidebar">
+			<div class="sidebar-header">
+				<div class="app-title">
+					<h1><span class="sheikah-eye">👁</span> BotW Object Map</h1>
+					<div class="app-title-actions">
+						<span id="headerActiveBadge" class="header-active-badge" style="display: none;">0 active</span>
+						<button id="shortcutsBtn" class="btn desktop-only-btn" title="Keyboard Shortcuts" style="padding: 4px 7px; font-size: 11px;">
+							<span>⌨ Hotkeys</span>
+						</button>
+						<button id="collapseSidebarBtn" class="btn desktop-only-btn" title="Collapse sidebar to maximize map ( [ )" aria-label="Collapse sidebar" style="padding: 4px 7px; font-size: 11px;">
+							<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg>
+						</button>
+						<button id="closeSidebarBtn" class="btn btn-close-drawer" title="Close Panel" aria-label="Close Panel">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+							<span>Close</span>
+						</button>
+					</div>
+				</div>
+
+				<!-- Prominent Search Bar -->
+				<div class="search-box-wrapper">
+					<span class="search-icon">🔍</span>
+					<input type="text" class="search search-input" placeholder="Search objects or internal IDs..." autocomplete="off"/>
+					<button type="button" id="searchClearBtn" class="search-clear-btn" title="Clear search query" aria-label="Clear search">✕</button>
+					<kbd class="search-kbd-hint" id="searchKbdHint">/</kbd>
+				</div>
 				
-				var internal_names = Object.keys(locations).sort();
-				var listHtml = internal_names.map(renderListItem).join("");
+				<!-- Category Filter Section (Horizontal Scrollable Chips) -->
+				<div class="category-filter-section">
+					<div id="categoryFilterBar" class="category-filter-bar"></div>
+				</div>
 
-				$('#sidebar > ul').append(listHtml);
+				<!-- Quick Actions & Options Toolbar -->
+				<div class="actions-toolbar">
+					<div class="quick-select-group">
+						<button id="selectAll" class="btn btn-primary btn-sm" title="Select all filtered items">
+							<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+							<span>Select All</span>
+						</button>
+						<button id="selectNone" class="btn btn-sm" title="Deselect all items">Clear All</button>
+					</div>
+					<button type="button" id="toggleOptionsBtn" class="btn btn-sm btn-options" title="Map region, quick presets & pin settings">
+						<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+						<span>Options</span>
+						<span id="optionsActiveBadge" class="options-active-badge" style="display: none;">0</span>
+						<svg class="options-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+					</button>
+				</div>
 
-				var icons = Array.from(Array(12).keys()).map(i => L.divIcon({className: 'div-icon' + i}));
-				var markers = {};
+				<!-- Collapsible Map & Presets Options Drawer -->
+				<div id="optionsDrawer" class="options-drawer" style="display: none;">
+					<div class="option-field">
+						<label for="mapSelector" class="option-label">Map Region / Layer</label>
+						<select id="mapSelector" class="map-select">
+							<option value="map_locations">Hyrule Overworld (Full Map)</option>
+							<option value="hyrule_castle">Hyrule Castle</option>
+							<option value="dungeons">Divine Beasts & Dungeons</option>
+							<option value="map_locations_trial">Trial of the Sword</option>
+						</select>
+					</div>
 
-				var markerClusterGroupOptions = {
-					removeOutsideVisibleBounds: true,
-					spiderfyOnMaxZoom: false,
-					disableClusteringAtZoom: 0,
-					animate: false,
-					maxClusterRadius: 20, 
-					iconCreateFunction: function(cluster) {
-						var childMarkers = cluster.getAllChildMarkers();
-						var titleText = '';
-						var iconClassName = '';
+					<div class="option-field">
+						<div class="option-header-row">
+							<span class="option-label">Quick Presets</span>
+							<button type="button" id="btnResetPresets" class="btn-link" style="display: none;">Clear Presets</button>
+						</div>
+						<div id="presetChipsContainer" class="preset-chips-container"></div>
+					</div>
 
-						if (childMarkers.length > 0) {
-							var childOptions = childMarkers[0].options;
-							titleText = childOptions.title;
+					<div class="option-field">
+						<span class="option-label">Marker Pin Size</span>
+						<div class="pin-size-toggle" role="group" aria-label="Pin Size">
+							<button type="button" class="btn-pin-size" data-size="tiny" title="Tiny pins (5px) - best for dense objects">Tiny (5px)</button>
+							<button type="button" class="btn-pin-size" data-size="small" title="Small pins (7px) - crisp and balanced">Small (7px)</button>
+							<button type="button" class="btn-pin-size active" data-size="medium" title="Medium pins (10px) - larger visibility (Default)">Medium (10px)</button>
+						</div>
+					</div>
 
-							if (childOptions.icon) {
-								iconClassName = childOptions.icon.options.className || '';
-							}
+					<div class="option-field">
+						<span class="option-label">Map View Actions</span>
+						<div class="map-view-actions-grid">
+							<button type="button" id="fitSelectedBtn" class="btn btn-sm" title="Fit active markers into view">
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+								<span>Fit Markers</span>
+							</button>
+							<button type="button" id="scaleToFrameBtn2" class="btn btn-sm" title="Scale entire map to fit frame without cropping">
+								<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+								<span>Scale Frame</span>
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<div class="sidebar-stats">
+				<span id="items-count-label">0 items listed</span>
+				<span id="active-markers-label" style="color: #38bdf8; font-weight: 600;">0 markers active</span>
+			</div>
+			
+			<div class="list-container">
+				<ul class="list"></ul>
+				<div class="sidebar-footer">
+					Many objects are dynamically generated. Datamining details: <a href="https://mrcheeze.github.io/" target="_blank" rel="noreferrer">MrCheeze's GitHub</a> &amp; <a href="https://objmap.zeldamods.org/" target="_blank" rel="noreferrer">Leoetlino's object map</a>.
+				</div>
+			</div>
+
+			<div class="mobile-drawer-bottom">
+				<button id="mobileViewMapBtn" class="btn btn-primary btn-drawer-confirm" title="Return to Map">
+					<span>View on Map</span>
+					<span id="mobileBottomBadge" class="mobile-bottom-badge">0 active</span>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Keyboard Shortcuts Modal -->
+	<div id="shortcutsModalOverlay" class="shortcuts-modal-overlay">
+		<div class="shortcuts-modal">
+			<div class="shortcuts-header">
+				<h3><span>⌨</span> Keyboard Shortcuts</h3>
+				<button type="button" id="closeShortcutsModal" class="shortcuts-close-btn" aria-label="Close Shortcuts">✕</button>
+			</div>
+			<div class="shortcuts-list">
+				<div class="shortcut-row">
+					<span>Toggle Object Panel</span>
+					<kbd>[</kbd>
+				</div>
+				<div class="shortcut-row">
+					<span>Focus Search Bar</span>
+					<kbd>/</kbd>
+				</div>
+				<div class="shortcut-row">
+					<span>Fit Active Markers into View</span>
+					<kbd>F</kbd>
+				</div>
+				<div class="shortcut-row">
+					<span>Scale Map to Frame (Avoid Cropping)</span>
+					<kbd>R</kbd>
+				</div>
+				<div class="shortcut-row">
+					<span>Cycle Marker Pin Size (Tiny / Small / Medium)</span>
+					<kbd>P</kbd>
+				</div>
+				<div class="shortcut-row">
+					<span>Clear Search / Close Panel</span>
+					<kbd>Esc</kbd>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		var presets = {
+			"AttackUp": ["Animal_Insect_G", "Item_Plant_G", "Item_Fruit_H", "Item_Mushroom_L", "Animal_Fish_E", "Item_FishGet_E", "Animal_Insect_K", "Animal_Fish_F", "Item_FishGet_F"],
+			"MovingSpeed": ["Animal_Insect_S", "Item_MushroomGet_D", "Item_Mushroom_D", "Item_PlantGet_M", "Item_Plant_M", "Animal_Insect_A", "Item_Plant_O", "Item_Fruit_E", "Item_PlantGet_O"],
+			"Fireproof": ["Animal_Insect_X"],
+			"Cooking Pots": ["Item_CookSet", "Item_CookSet_PanOnly"],
+			"Horses": ["WildHorseCreateTag", "WildHorseCreateTag01", "WildHorseCreateTag02", "WildHorseCreateTag03", "GameRomHorseBone", "GameRomHorseNushi", "GameRomHorseZelda", "GameRomHorse00L"],
+			"Overworld Bosses": [
+				"Enemy_Giant_Bone", "Enemy_Giant_Bone_AllDay", "Enemy_Giant_Junior", "Enemy_Giant_Middle", "Enemy_Giant_Senior",
+				"Enemy_Golem_Fire", "Enemy_Golem_Ice", "Enemy_Golem_Junior", "Enemy_Golem_Middle", "Enemy_Golem_Senior",
+				"Enemy_Lynel_Dark", "Enemy_Lynel_Junior", "Enemy_Lynel_Junior_Mountain", "Enemy_Lynel_Middle", "Enemy_Lynel_Senior",
+				"Enemy_Sandworm", "Enemy_Assassin_Senior"
+			],
+			"Treasure Chests": ["TBox"],
+			"DLC": ["Aoc", "HARD:"],
+			"Koroks": ["Npc_HiddenKorokFly", "Npc_HiddenKorokGround", "Obj_KorokNuts", "Obj_KorokPot_A_01", "Obj_LiftRockWhite_Korok_A_01"],
+			"Guardians": ["Enemy_Guardian_A", "Enemy_Guardian_B", "Enemy_Guardian_C", "Enemy_Guardian_Mini", "Enemy_Guardian_A_Fixed_Moss"],
+			"Weapons & Bows": ["Weapon_Sword", "Weapon_Lsword", "Weapon_Spear", "Weapon_Bow", "Weapon_Shield"]
+		};
+
+		var map = L.map('botw_map', {
+			preferCanvas: true,
+			minZoom: -8,
+			maxZoom: 6,
+			center: [0, 0],
+			zoomSnap: 0,
+			zoomDelta: 0.5,
+			wheelPxPerZoomLevel: 100,
+			crs: L.CRS.Simple,
+			attributionControl: false,
+			touchZoom: false, // Managed by our dedicated non-passive pinch controller to prevent browser page zooming
+			tap: false,
+			zoomControl: true,
+			bounceAtZoomLimits: false,
+			maxBoundsViscosity: 0.4
+		});
+
+		var southWest = map.unproject([-6000, 5000], 0);
+		var northEast = map.unproject([6000, -5000], 0);
+		var bounds = new L.LatLngBounds(southWest, northEast);
+		
+		var imageOverlay = L.imageOverlay('BotW-Map-Grid.png', bounds).addTo(map);
+		map.setMaxBounds(bounds.pad(0.35));
+
+		// Custom on-map control buttons for scale-to-frame, fit-markers, and pin-size cycling
+		L.Control.MapTools = L.Control.extend({
+			options: { position: 'topleft' },
+			onAdd: function() {
+				var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-fit');
+				
+				// Scale to Frame button (guarantees entire map fits without cropping)
+				var frameLink = L.DomUtil.create('a', 'leaflet-control-frame-btn', container);
+				frameLink.href = '#';
+				frameLink.title = 'Scale Map to Frame (Avoid Cropping)';
+				frameLink.setAttribute('role', 'button');
+				frameLink.setAttribute('aria-label', 'Scale Map to Frame');
+				frameLink.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; pointer-events:none;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>';
+				L.DomEvent.on(frameLink, 'click', function(e) {
+					L.DomEvent.stop(e);
+					scaleToFrame(true);
+				});
+
+				// Fit Active Markers button
+				var fitLink = L.DomUtil.create('a', 'leaflet-control-markers-btn', container);
+				fitLink.href = '#';
+				fitLink.title = 'Fit Active Markers';
+				fitLink.setAttribute('role', 'button');
+				fitLink.setAttribute('aria-label', 'Fit Active Markers');
+				fitLink.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; pointer-events:none;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>';
+				L.DomEvent.on(fitLink, 'click', function(e) {
+					L.DomEvent.stop(e);
+					fitActiveMarkers(true);
+				});
+
+				// Pin Size Cycle button
+				var pinLink = L.DomUtil.create('a', 'leaflet-control-pinsize-btn', container);
+				pinLink.id = 'mapPinSizeBtn';
+				pinLink.href = '#';
+				pinLink.title = 'Pin Size: Medium (10px) - Click to cycle';
+				pinLink.setAttribute('role', 'button');
+				pinLink.setAttribute('aria-label', 'Cycle Pin Size');
+				pinLink.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; pointer-events:none;"><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg>';
+				L.DomEvent.on(pinLink, 'click', function(e) {
+					L.DomEvent.stop(e);
+					cyclePinSize();
+				});
+
+				return container;
+			}
+		});
+		new L.Control.MapTools().addTo(map);
+
+		// Dynamic coordinate HUD tracker (mouse, tap, and pan movements)
+		var currentHudCoords = [0, 0];
+		function updateCoords(latlng) {
+			if (!latlng) return;
+			var point = map.project(latlng, 0);
+			var x = Math.round(point.x);
+			var z = Math.round(point.y);
+			currentHudCoords = [x, z];
+			var textEl = document.getElementById('coord-hud-text');
+			if (textEl) {
+				textEl.textContent = 'X: ' + x + ' | Z: ' + z;
+			}
+			var zoomEl = document.getElementById('coord-hud-zoom');
+			if (zoomEl && map) {
+				var zoomPct = Math.round(Math.pow(2, map.getZoom()) * 100);
+				zoomEl.textContent = zoomPct + '%';
+			}
+		}
+
+		map.on('mousemove', function(e) {
+			updateCoords(e.latlng);
+		});
+		map.on('click', function(e) {
+			updateCoords(e.latlng);
+		});
+		map.on('move', function() {
+			updateCoords(map.getCenter());
+		});
+		map.on('zoomend', function() {
+			updateCoords(map.getCenter());
+		});
+
+		$('#hudCopyBtn').click(function(e) {
+			e.stopPropagation();
+			var str = '[' + currentHudCoords[0] + ', ' + currentHudCoords[1] + ']';
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(str);
+			}
+			var btn = $(this);
+			var oldText = btn.text();
+			btn.text('✓ Copied!').css({ color: '#38bdf8', borderColor: '#38bdf8' });
+			setTimeout(function() {
+				btn.text(oldText).css({ color: '', borderColor: '' });
+			}, 1500);
+		});
+
+		// Pinch-to-zoom & browser page-zoom prevention controller
+		(function setupTouchPinchZoom() {
+			// Prevent browser page zoom gesture events (Safari / iOS / Chrome)
+			['gesturestart', 'gesturechange', 'gestureend'].forEach(function(evt) {
+				document.addEventListener(evt, function(e) {
+					e.preventDefault();
+				}, { passive: false });
+			});
+
+			// Prevent multi-touch pinch zooming from propagating to the browser window/iframe
+			window.addEventListener('touchmove', function(e) {
+				if (e.touches && e.touches.length > 1) {
+					e.preventDefault();
+				}
+			}, { passive: false });
+
+			var mapContainer = document.getElementById('botw_map');
+			if (!mapContainer) return;
+
+			var isPinching = false;
+			var startDistance = 0;
+			var startZoom = 0;
+			var startMidpointLatLng = null;
+
+			function getTouchDistance(t1, t2) {
+				var dx = t1.clientX - t2.clientX;
+				var dy = t1.clientY - t2.clientY;
+				return Math.sqrt(dx * dx + dy * dy);
+			}
+
+			function getTouchMidpointContainer(t1, t2) {
+				var rect = mapContainer.getBoundingClientRect();
+				var midX = ((t1.clientX + t2.clientX) / 2) - rect.left;
+				var midY = ((t1.clientY + t2.clientY) / 2) - rect.top;
+				return L.point(midX, midY);
+			}
+
+			mapContainer.addEventListener('touchstart', function(e) {
+				if (e.touches && e.touches.length >= 2) {
+					e.preventDefault();
+					var dist = getTouchDistance(e.touches[0], e.touches[1]);
+					if (dist > 5) {
+						isPinching = true;
+						startDistance = dist;
+						startZoom = map.getZoom();
+						var midPt = getTouchMidpointContainer(e.touches[0], e.touches[1]);
+						startMidpointLatLng = map.containerPointToLatLng(midPt);
+						if (map.dragging && map.dragging.enabled()) {
+							map.dragging.disable();
 						}
-						// Set the options and icon based on inherited child values
-						cluster.options.title = childMarkers.length + " x " + titleText;
-						return L.divIcon({
-							html: cluster.getChildCount(),
-							className: "big-icon " + iconClassName,
-							iconSize: [18, 18]
-						});
 					}
+				}
+			}, { passive: false });
+
+			mapContainer.addEventListener('touchmove', function(e) {
+				if (e.touches && e.touches.length >= 2) {
+					e.preventDefault();
+					var curDist = getTouchDistance(e.touches[0], e.touches[1]);
+					if (!isPinching && curDist > 5) {
+						isPinching = true;
+						startDistance = curDist;
+						startZoom = map.getZoom();
+						var midPtInit = getTouchMidpointContainer(e.touches[0], e.touches[1]);
+						startMidpointLatLng = map.containerPointToLatLng(midPtInit);
+						if (map.dragging && map.dragging.enabled()) {
+							map.dragging.disable();
+						}
+					}
+					if (isPinching && startDistance > 0 && startMidpointLatLng) {
+						var curMidpointContainerPt = getTouchMidpointContainer(e.touches[0], e.touches[1]);
+						var scale = curDist / startDistance;
+						var deltaZoom = Math.log2(scale);
+						var targetZoom = startZoom + deltaZoom;
+						var minZ = map.getMinZoom();
+						var maxZ = map.getMaxZoom();
+						var clampedZoom = Math.max(minZ, Math.min(maxZ, targetZoom));
+
+						// Smooth simultaneous zoom & pan: keeping the focal point stationary under fingers
+						var mapSize = map.getSize();
+						var centerOffset = curMidpointContainerPt.subtract(mapSize.divideBy(2));
+						var projectedTarget = map.project(startMidpointLatLng, clampedZoom).subtract(centerOffset);
+						var newCenterLatLng = map.unproject(projectedTarget, clampedZoom);
+
+						map.setView(newCenterLatLng, clampedZoom, { animate: false });
+					}
+				}
+			}, { passive: false });
+
+			function handlePinchEnd(e) {
+				if (isPinching) {
+					if (!e.touches || e.touches.length < 2) {
+						isPinching = false;
+						startDistance = 0;
+						startMidpointLatLng = null;
+						setTimeout(function() {
+							if (map.dragging && !map.dragging.enabled()) {
+								map.dragging.enable();
+							}
+						}, 60);
+					}
+				}
+			}
+
+			mapContainer.addEventListener('touchend', handlePinchEnd, { passive: true });
+			mapContainer.addEventListener('touchcancel', handlePinchEnd, { passive: true });
+		})();
+
+		// Pin Size Management (Tiny = 5px, Small = 7px, Medium = 10px default)
+		var currentPinSize = 'medium';
+
+		function getPinPixelSize(size) {
+			if (size === 'tiny') return 5;
+			if (size === 'small') return 7;
+			return 10;
+		}
+
+		function getClusterPixelSize(size) {
+			if (size === 'tiny') return 13;
+			if (size === 'small') return 16;
+			return 20;
+		}
+
+		function setPinSize(size) {
+			if (size !== 'tiny' && size !== 'small' && size !== 'medium') {
+				size = 'medium';
+			}
+			currentPinSize = size;
+			var px = getPinPixelSize(size);
+			var anchor = px / 2;
+
+			// Instant CSS class toggle on map container updates all existing pins on screen
+			$('#botw_map').removeClass('pin-size-tiny pin-size-small pin-size-medium').addClass('pin-size-' + size);
+			
+			// Update active states in sidebar buttons
+			$('.btn-pin-size').removeClass('active');
+			$('.btn-pin-size[data-size="' + size + '"]').addClass('active');
+
+			// Update on-map tool button and mobile quick button labels
+			var label = size.charAt(0).toUpperCase() + size.slice(1);
+			$('#mapPinSizeBtn').attr('title', 'Pin Size: ' + label + ' (' + px + 'px) - Click to cycle');
+			$('#mobilePinSizeLabel').text(px + 'px Pin');
+
+			// Update base icons array for any new markers instantiated
+			icons = Array.from(Array(13).keys()).map(function(i) {
+				return L.divIcon({ className: 'div-icon' + i, iconSize: [px, px], iconAnchor: [anchor, anchor] });
+			});
+		}
+
+		function cyclePinSize() {
+			var nextSize = currentPinSize === 'medium' ? 'tiny' : (currentPinSize === 'tiny' ? 'small' : 'medium');
+			setPinSize(nextSize);
+		}
+
+		var defaultPinPx = 10;
+		var icons = Array.from(Array(13).keys()).map(function(i) {
+			return L.divIcon({ className: 'div-icon' + i, iconSize: [defaultPinPx, defaultPinPx], iconAnchor: [defaultPinPx / 2, defaultPinPx / 2] });
+		});
+
+		var markers = {};
+		var sidebarList = null;
+		var activeMarkerCount = 0;
+
+		var markerClusterGroupOptions = {
+			removeOutsideVisibleBounds: true,
+			spiderfyOnMaxZoom: true,
+			disableClusteringAtZoom: 2,
+			animate: false,
+			maxClusterRadius: 18,
+			iconCreateFunction: function(cluster) {
+				var childMarkers = cluster.getAllChildMarkers();
+				var titleText = '';
+				var iconClassName = '';
+
+				if (childMarkers.length > 0) {
+					var childOptions = childMarkers[0].options;
+					titleText = childOptions.title || '';
+					if (childOptions.icon) {
+						iconClassName = childOptions.icon.options.className || '';
+					}
+				}
+				cluster.options.title = childMarkers.length + " x " + titleText;
+				var cPx = getClusterPixelSize(currentPinSize);
+				return L.divIcon({
+					html: cluster.getChildCount(),
+					className: "big-icon " + iconClassName,
+					iconSize: [cPx, cPx],
+					iconAnchor: [cPx / 2, cPx / 2]
+				});
+			}
+		};
+
+		function stringToValue(str) {
+			var hash = 0;
+			for (var i = 0; i < str.length; i++) {
+				var char = str.charCodeAt(i);
+				hash = ((hash << 5) - hash) + char;
+				hash = hash & hash;
+			}
+			return Math.abs(hash);
+		}
+
+		function getFamiliarName(internal_name) {
+			if (!internal_name) return "";
+			var locData = window.locations ? locations[internal_name] : null;
+			var dName = locData ? locData.display_name : null;
+			if (window.BotwNaming) {
+				return BotwNaming.getFamiliarName(internal_name, dName);
+			}
+			return (dName && dName !== internal_name) ? dName : internal_name;
+		}
+
+		function getItemCategory(internal_name, familiarName) {
+			if (window.BotwNaming) {
+				return BotwNaming.getItemCategory(internal_name, familiarName);
+			}
+			return { key: "system", name: "System & Triggers", icon: "⚙️", badgeClass: "cat-system" };
+		}
+
+		function getExpandedName(internal_name) {
+			var fName = getFamiliarName(internal_name);
+			return (fName && fName !== internal_name) ? (fName + ' — ' + internal_name) : internal_name;
+		}
+
+		function renderListItem(internal_name) {
+			var locData = locations[internal_name];
+			var count = (locData && locData.locations) ? locData.locations.length : 0;
+			var familiarName = getFamiliarName(internal_name);
+			var cat = getItemCategory(internal_name, familiarName);
+			var colorIdx = stringToValue(internal_name) % icons.length;
+			var isChecked = (internal_name in markers) && map.hasLayer(markers[internal_name]);
+			
+			var s = '<li data-category="' + cat.key + '" data-name="' + internal_name + '" class="' + (isChecked ? 'is-checked' : '') + '"><label><input type="checkbox" name="' + internal_name + '"' + (isChecked ? ' checked' : '') + '>';
+			s += '<span class="marker-swatch div-icon' + colorIdx + '" title="Color Pin"></span>';
+			s += '<div class="item-content">';
+			s += '<div class="item-header-row">';
+			s += '<span class="category-badge ' + cat.badgeClass + '" title="' + cat.name + '">' + cat.icon + ' ' + (cat.name.split(' ')[0]) + '</span> ';
+			s += '<span class="display-name">' + familiarName + '</span>';
+			s += '</div>';
+			if (familiarName !== internal_name) {
+				s += '<span class="internal-name">' + internal_name + '</span>';
+			}
+			s += '</div>';
+			s += '<span class="item-count">' + count + '</span>';
+			s += '<button type="button" class="btn-item-focus" data-name="' + internal_name + '" title="Zoom to object on map" aria-label="Focus on map">';
+			s += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>';
+			s += '</button>';
+			s += '<span class="itemName">' + familiarName + ' ' + internal_name + ' ' + cat.name + '</span></label></li>';
+			return s;
+		}
+
+		var currentCategoryFilter = 'all';
+
+		function applyCombinedFilters() {
+			if (!sidebarList) return;
+
+			var hasPresets = activePresets && activePresets.length > 0;
+			var regexList = hasPresets ? activePresets.map(function(presetName) {
+				return new RegExp('.*(' + presets[presetName].join("|") + ').*', 'i');
+			}) : null;
+
+			sidebarList.filter(function(item) {
+				var cat = item.elm ? item.elm.getAttribute('data-category') : '';
+				if (currentCategoryFilter !== 'all' && cat !== currentCategoryFilter) {
+					return false;
+				}
+
+				if (hasPresets) {
+					var itemName = item.values().itemName;
+					var matched = regexList.some(function(regex) {
+						return regex.test(itemName);
+					});
+					if (!matched) return false;
+				}
+
+				return true;
+			});
+
+			setSelectAllSafety();
+			updateStats();
+		}
+
+		function renderCategoryPills(internal_names) {
+			var counts = { all: internal_names.length };
+			internal_names.forEach(function(name) {
+				var fName = getFamiliarName(name);
+				var cat = getItemCategory(name, fName);
+				counts[cat.key] = (counts[cat.key] || 0) + 1;
+			});
+
+			var categories = window.BotwNaming ? BotwNaming.categories : [];
+			var html = categories.map(function(c) {
+				var count = counts[c.key] || 0;
+				var activeClass = (c.key === currentCategoryFilter) ? ' active' : '';
+				return '<button type="button" class="btn-cat-filter' + activeClass + '" data-cat="' + c.key + '" title="' + c.label + ' (' + count + ' items)">' +
+					'<span>' + c.icon + '</span> ' +
+					'<span>' + c.name + '</span> ' +
+					'<span class="cat-count">' + count + '</span>' +
+					'</button>';
+			}).join('');
+
+			$('#categoryFilterBar').html(html);
+		}
+
+		$('#categoryFilterBar').on('click', '.btn-cat-filter', function(e) {
+			e.preventDefault();
+			var cat = $(this).data('cat');
+			currentCategoryFilter = cat;
+			$('.btn-cat-filter').removeClass('active');
+			$(this).addClass('active');
+			
+			var activeObj = window.BotwNaming ? BotwNaming.categories.find(function(c) { return c.key === cat; }) : null;
+			$('#categoryActiveName').text(activeObj ? (activeObj.icon + ' ' + activeObj.label) : 'All Items');
+			
+			applyCombinedFilters();
+		});
+
+		function updateActiveLayersTray() {
+			var tray = $('#activeLayersTray');
+			var list = $('#activeChipsList');
+			var activeKeys = Object.keys(markers).filter(function(k) {
+				return markers[k] && map.hasLayer(markers[k]) && markers[k].getLayers().length > 0;
+			});
+
+			if (activeKeys.length === 0) {
+				tray.hide();
+				return;
+			}
+
+			tray.css('display', 'flex');
+			$('#activeLayersCount').text(activeMarkerCount);
+
+			var chipsHtml = activeKeys.map(function(name) {
+				var fName = getFamiliarName(name);
+				var colorIdx = stringToValue(name) % icons.length;
+				var count = locations[name] ? locations[name].locations.length : 0;
+				return '<span class="active-chip" data-name="' + name + '">' +
+					'<span class="marker-swatch div-icon' + colorIdx + '" style="margin:0; width:7px; height:7px; min-width:7px; min-height:7px;"></span>' +
+					'<span class="chip-name" title="' + fName + ' (' + name + ')">' + fName + ' (' + count + ')</span>' +
+					'<button type="button" class="chip-remove-btn" data-name="' + name + '" title="Remove layer" aria-label="Remove layer">✕</button>' +
+					'</span>';
+			}).join('');
+
+			list.html(chipsHtml);
+		}
+
+		function updateStats() {
+			var totalListed = $('.list li:visible').length;
+			$('#items-count-label').text(totalListed + ' items listed');
+			$('#active-markers-label').text(activeMarkerCount + ' markers active');
+			
+			// Update badges
+			if (activeMarkerCount > 0) {
+				$('#headerActiveBadge').text(activeMarkerCount + ' active').show();
+				$('#mobileBadge').text(activeMarkerCount).show();
+				$('#mobileBottomBadge').text(activeMarkerCount + ' active');
+			} else {
+				$('#headerActiveBadge').hide();
+				$('#mobileBadge').hide();
+				$('#mobileBottomBadge').text('0 active');
+			}
+
+			// Update active floating layers tray
+			updateActiveLayersTray();
+
+			// Toggle Empty State in list if 0 matches
+			var hasLocations = window.locations && Object.keys(locations).length > 0;
+			if (totalListed === 0 && hasLocations) {
+				if ($('#listEmptyState').length === 0) {
+					$('.list-container').append(
+						'<div id="listEmptyState" class="list-empty-state">' +
+						'<span class="empty-icon">🔍</span>' +
+						'<div class="empty-title">No objects found</div>' +
+						'<div class="empty-desc">No objects matched your search, presets, or category filter.</div>' +
+						'<button type="button" class="btn btn-primary" id="btnResetFilters" style="padding: 6px 14px; font-size: 11.5px;">Reset All Filters</button>' +
+						'</div>'
+					);
+				}
+				$('#listEmptyState').show();
+			} else {
+				$('#listEmptyState').hide();
+			}
+		}
+
+		function clearAllMarkers() {
+			for (var key in markers) {
+				if (markers.hasOwnProperty(key)) {
+					map.removeLayer(markers[key]);
+					markers[key].clearLayers();
+				}
+			}
+			markers = {};
+			activeMarkerCount = 0;
+			$('.list li').removeClass('is-checked');
+			updateStats();
+		}
+
+		function loadMapData(locationfile) {
+			$('#loading-overlay').css({ opacity: 1, display: 'flex' });
+			$('#loading-text').text('Loading data for ' + locationfile + '...');
+			clearAllMarkers();
+			$('.list').empty();
+
+			$.ajax({
+				url: locationfile + '.js',
+				dataType: 'script',
+				cache: true,
+				success: function() {
+					if (typeof locations === 'undefined') {
+						$('#loading-text').text('Failed to parse location data.');
+						return;
+					}
+					
+					var internal_names = Object.keys(locations).sort();
+					renderCategoryPills(internal_names);
+					var listHtml = internal_names.map(renderListItem).join("");
+					$('.list').html(listHtml);
+
+					if (sidebarList) {
+						sidebarList.reIndex();
+					} else {
+						sidebarList = new List("sidebar", { valueNames: ['itemName'] });
+					}
+
+					applyCombinedFilters();
+					$('#items-count-label').text(internal_names.length + ' items listed');
+					$('#loading-overlay').fadeOut(200);
+					map.invalidateSize();
+					scaleMapToFit(false);
+					setSelectAllSafety();
+				},
+				error: function() {
+					if (locationfile === 'map_locations') {
+						loadMapData('map_locations_trial');
+					} else {
+						$('#loading-text').text('Error loading data file.');
+					}
+				}
+			});
+		}
+
+		// Checkbox toggle handler
+		$('.list-container').on('change', 'input[type="checkbox"]', function() {
+			var name = this.name;
+			if (!locations || !locations[name]) return;
+
+			if (!(name in markers)) {
+				markers[name] = L.markerClusterGroup(markerClusterGroupOptions);
+			}
+			var groupMarker = markers[name];
+			var count = locations[name].locations.length;
+			var isChecked = $(this).is(':checked');
+
+			$(this).closest('li').toggleClass('is-checked', isChecked);
+
+			if (isChecked) {
+				var markerOptions = {
+					icon: icons[stringToValue(name) % icons.length],
+					keyboard: false,
+					title: getExpandedName(name)
 				};
 
-				// Note: in case we want to load the sidebar items asynchronously, using this style of event
-				// handler will apply to both current and future items
-				$('#sidebar > ul').on('change', 'input', function () {
-					if (!(this.name in markers)) {
-						markers[this.name] = L.markerClusterGroup(markerClusterGroupOptions);
-					}
-					var groupMarker = markers[this.name];
-
-					if ($(this).is(':checked')) {
-
-						var markerOptions = {
-							icon: icons[stringToValue(this.name) % icons.length],
-							keyboard: false,
-							title: getExpandedName(this.name)
-						};
-
-						var targetLocations = locations[this.name].locations;
-						var newMarkers = targetLocations.map(target => {
-							var coords = map.unproject(target, 0);
-							return L.marker(coords, markerOptions);
-						});
-						groupMarker.addLayers(newMarkers);
-						map.addLayer(groupMarker);
-					} else {
-						map.removeLayer(groupMarker);
-						groupMarker.clearLayers(); // Get some memory back?
-					}
+				var targetLocations = locations[name].locations;
+				var familiarName = getFamiliarName(name);
+				var cat = getItemCategory(name, familiarName);
+				var newMarkers = targetLocations.map(function(target) {
+					var coords = map.unproject(target, 0);
+					var m = L.marker(coords, markerOptions);
+					var tx = Math.round(target[0]);
+					var tz = Math.round(target[1]);
+					var popupContent = '<div class="popup-sheikah-card">' +
+						'<div class="popup-header">' +
+						'<span class="category-badge ' + cat.badgeClass + '" style="font-size: 9px; padding: 1px 6px;">' + cat.icon + ' ' + cat.name + '</span>' +
+						'<span style="font-size: 10px; color: #64748b; font-family: ui-monospace, monospace;">#' + cat.key + '</span>' +
+						'</div>' +
+						'<div class="popup-title">' + familiarName + '</div>' +
+						(familiarName !== name ? '<div class="popup-id-row"><span>ID:</span> <code>' + name + '</code></div>' : '') +
+						'<div class="popup-coords-row">⌖ X: ' + tx + ' | Z: ' + tz + '</div>' +
+						'<div class="popup-actions">' +
+						'<button type="button" class="popup-btn" onclick="map.setView(map.unproject([' + tx + ', ' + tz + '], 0), 2, {animate:true});">🎯 Center</button>' +
+						'<button type="button" class="popup-btn" onclick="navigator.clipboard.writeText(\'[' + tx + ', ' + tz + ']\'); this.textContent=\'✓ Copied\';">📋 Copy Coords</button>' +
+						'</div>' +
+						'</div>';
+					m.bindPopup(popupContent);
+					return m;
 				});
 
-				var sidebarList = new List("sidebar", { valueNames: ['itemName'] });
-
-				// Create preset filters
-				var presetOptions = Object.keys(presets).map(presetName => '<option>' + presetName + '</option>');
-				$('#filter').append(presetOptions.join(""));
-				$("#filter").chosen().change(function(){
-					var selectedOptions = $(this).val();
-					if (!selectedOptions) {
-						sidebarList.filter();
-					} else {
-						var regexList = $(this).val().map(presetName => new RegExp('.*(' + presets[presetName].join("|") + ').*'));
-						sidebarList.filter(item => {
-							var itemName = item.values().itemName;
-							return regexList.every(regex => regex.test(itemName));
-						});
-					}
-				});
-
-				$('#selectAll').click(function() {
-					$('.list input:checkbox:not(:checked)').prop('checked', true).trigger('change');
-				});
-
-				$('#selectNone').click(function() {
-					$('.list input:checkbox:checked').prop('checked', false).trigger('change');
-				});
-
-				sidebarList.on('searchComplete', setSelectAllSafety);
-				sidebarList.on('filterComplete', setSelectAllSafety);
-
-				function setSelectAllSafety() {
-					$('#selectAll').prop('disabled', sidebarList.matchingItems.length > 1000);
-				}
-			});
-
-			// hash the string
-			function stringToValue(str) {
-				var hash = 0;
-				for (i = 0; i < str.length; i++) {
-					char = str.charCodeAt(i);
-					hash = ((hash<<5)-hash)+char;
-					hash = hash & hash;
-				}
-				return Math.abs(hash);
-			};
-			function getExpandedName(internal_name) {
-				return ((locations[internal_name].display_name !== internal_name) ? locations[internal_name].display_name + ' — ': '') + internal_name;
+				groupMarker.addLayers(newMarkers);
+				map.addLayer(groupMarker);
+				activeMarkerCount += count;
+			} else {
+				map.removeLayer(groupMarker);
+				groupMarker.clearLayers();
+				activeMarkerCount = Math.max(0, activeMarkerCount - count);
 			}
-			function renderListItem(internal_name) {
-				var s = '<li><label><input type="checkbox" name="' + internal_name + '">';
-				if (locations[internal_name].display_name !== internal_name) {
-					s += '<span class="display-name">' + locations[internal_name].display_name + '</span> <span class="name-separator">—</span> ';
-				}
-				s += '<span class="internal-name">' + internal_name + '</span><span class="itemName">'+getExpandedName(internal_name)+'</span></label></li>';
-				return s;
+			updateStats();
+		});
+
+		// Modern Preset Chips System
+		var activePresets = [];
+		var presetMeta = {
+			"AttackUp": { icon: "⚔️", label: "Attack Up" },
+			"MovingSpeed": { icon: "⚡", label: "Speed Up" },
+			"Fireproof": { icon: "🔥", label: "Fireproof" },
+			"Cooking Pots": { icon: "🍳", label: "Cooking Pots" },
+			"Horses": { icon: "🐴", label: "Horses" },
+			"Overworld Bosses": { icon: "👹", label: "Bosses" },
+			"Treasure Chests": { icon: "💎", label: "Chests" },
+			"DLC": { icon: "👑", label: "DLC" },
+			"Koroks": { icon: "🌿", label: "Koroks" },
+			"Guardians": { icon: "🤖", label: "Guardians" },
+			"Weapons & Bows": { icon: "🏹", label: "Weapons" }
+		};
+
+		function renderPresetChips() {
+			var container = $('#presetChipsContainer');
+			var html = Object.keys(presets).map(function(presetKey) {
+				var meta = presetMeta[presetKey] || { icon: "🏷️", label: presetKey };
+				var isActive = activePresets.indexOf(presetKey) !== -1;
+				return '<button type="button" class="preset-chip' + (isActive ? ' active' : '') + '" data-preset="' + presetKey + '" title="Filter by ' + meta.label + '">' +
+					'<span>' + meta.icon + '</span>' +
+					'<span>' + meta.label + '</span>' +
+					'</button>';
+			}).join('');
+			container.html(html);
+			updatePresetBadges();
+		}
+
+		function updatePresetBadges() {
+			var count = activePresets.length;
+			if (count > 0) {
+				$('#optionsActiveBadge').text(count).show();
+				$('#btnResetPresets').show();
+			} else {
+				$('#optionsActiveBadge').hide();
+				$('#btnResetPresets').hide();
+			}
+		}
+
+		$('#presetChipsContainer').on('click', '.preset-chip', function(e) {
+			e.preventDefault();
+			var key = $(this).data('preset');
+			var idx = activePresets.indexOf(key);
+			if (idx === -1) {
+				activePresets.push(key);
+				$(this).addClass('active');
+			} else {
+				activePresets.splice(idx, 1);
+				$(this).removeClass('active');
+			}
+			updatePresetBadges();
+			applyCombinedFilters();
+		});
+
+		$('#btnResetPresets').click(function() {
+			activePresets = [];
+			$('.preset-chip').removeClass('active');
+			updatePresetBadges();
+			applyCombinedFilters();
+		});
+
+		// Options Drawer Toggle
+		$('#toggleOptionsBtn').click(function(e) {
+			e.preventDefault();
+			var drawer = $('#optionsDrawer');
+			var isOpen = drawer.is(':visible');
+			if (isOpen) {
+				drawer.slideUp(160);
+				$(this).removeClass('active');
+			} else {
+				drawer.slideDown(160);
+				$(this).addClass('active');
+			}
+		});
+
+		renderPresetChips();
+
+		function setSelectAllSafety() {
+			if (!sidebarList) return;
+			var matching = sidebarList.matchingItems ? sidebarList.matchingItems.length : 0;
+			$('#selectAll').prop('disabled', matching > 800);
+		}
+
+		$('#selectAll').click(function() {
+			$('.list li:visible input:checkbox:not(:checked)').prop('checked', true).trigger('change');
+		});
+
+		function getCurrentLayerBounds() {
+			var selected = $('#mapSelector').val();
+			if (selected === 'hyrule_castle') {
+				// Hyrule Castle area centered and framed
+				return new L.LatLngBounds(map.unproject([-850, 50], 0), map.unproject([450, -1550], 0));
+			} else if (selected === 'dungeons') {
+				// Divine Beasts & Dungeons area
+				return new L.LatLngBounds(map.unproject([-500, 450], 0), map.unproject([550, -350], 0));
+			} else if (selected === 'map_locations_trial') {
+				// Trial of the Sword area
+				return new L.LatLngBounds(map.unproject([-5050, 800], 0), map.unproject([-1750, -4050], 0));
+			}
+			// Full overworld bounds
+			return bounds;
+		}
+
+		var isProgrammaticFit = false;
+
+		// Scale full map boundary into the frame so zero edges are cropped
+		function scaleToFrame(animated) {
+			if (!map) return;
+			map.invalidateSize({ debounceMoveEvents: true });
+
+			var targetBounds = getCurrentLayerBounds();
+			var isMobile = window.innerWidth <= 768;
+			var padding = isMobile ? [8, 8] : [16, 16];
+			
+			var options = {
+				padding: padding,
+				animate: animated !== false
 			};
-		</script>
-	</body>
+
+			isProgrammaticFit = true;
+			map.fitBounds(targetBounds, options);
+			setTimeout(function() {
+				isProgrammaticFit = false;
+			}, 400);
+		}
+
+		// Zoom to fit currently active markers (or fallback to frame if none active)
+		function fitActiveMarkers(animated) {
+			if (!map) return;
+			map.invalidateSize({ debounceMoveEvents: true });
+
+			var activeBounds = L.latLngBounds([]);
+			var hasMarkers = false;
+			for (var key in markers) {
+				if (markers.hasOwnProperty(key) && map.hasLayer(markers[key])) {
+					var groupBounds = markers[key].getBounds();
+					if (groupBounds.isValid()) {
+						activeBounds.extend(groupBounds);
+						hasMarkers = true;
+					}
+				}
+			}
+
+			if (hasMarkers && activeBounds.isValid()) {
+				var isMobile = window.innerWidth <= 768;
+				var padding = isMobile ? [16, 16] : [28, 28];
+				isProgrammaticFit = true;
+				map.fitBounds(activeBounds, {
+					padding: padding,
+					maxZoom: 2,
+					animate: animated !== false
+				});
+				setTimeout(function() {
+					isProgrammaticFit = false;
+				}, 400);
+			} else {
+				scaleToFrame(animated);
+			}
+		}
+
+		// Backward-compatible alias used in automatic resizing
+		var scaleMapToFit = scaleToFrame;
+
+		$('#selectNone').click(function() {
+			$('.list input:checkbox:checked').prop('checked', false).trigger('change');
+			setTimeout(function() {
+				scaleToFrame(true);
+			}, 50);
+		});
+
+		$('#resetViewBtn, #scaleToFrameBtn, #scaleToFrameBtn2, #mobileScaleFrameBtn').click(function() {
+			scaleToFrame(true);
+		});
+
+		$('#fitSelectedBtn, #mobileFitBtn').click(function() {
+			fitActiveMarkers(true);
+		});
+
+		// Marker Pin Size Selection and Cycling
+		$('.btn-pin-size').click(function() {
+			var size = $(this).data('size');
+			setPinSize(size);
+		});
+
+		$('#mobilePinSizeBtn').click(function(e) {
+			e.stopPropagation();
+			cyclePinSize();
+		});
+
+		// Mobile Drawer Controls
+		function openMobileDrawer() {
+			$('#sidebar').addClass('open');
+			$('#sidebar-backdrop').addClass('open');
+		}
+
+		function closeMobileDrawer() {
+			$('#sidebar').removeClass('open');
+			$('#sidebar-backdrop').removeClass('open');
+			setTimeout(function() {
+				scaleToFrame(false);
+			}, 300);
+		}
+
+		$('#mobileToggleBtn').click(openMobileDrawer);
+		$('#closeSidebarBtn').click(closeMobileDrawer);
+		$('#sidebar-backdrop').click(closeMobileDrawer);
+		$('#mobileViewMapBtn').click(function() {
+			closeMobileDrawer();
+			fitActiveMarkers(true);
+		});
+
+		// Focus on single item markers on map
+		$('.list-container').on('click', '.btn-item-focus', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			var name = $(this).data('name');
+			if (!locations || !locations[name]) return;
+
+			var cb = $('input[name="' + name + '"]');
+			if (!cb.is(':checked')) {
+				cb.prop('checked', true).trigger('change');
+			}
+
+			if (markers[name] && map.hasLayer(markers[name])) {
+				var groupBounds = markers[name].getBounds();
+				if (groupBounds.isValid()) {
+					map.fitBounds(groupBounds, { maxZoom: 2, padding: [40, 40], animate: true });
+				}
+			}
+
+			if (window.innerWidth <= 768) {
+				closeMobileDrawer();
+			}
+		});
+
+		// Active layers tray removal & clear
+		$('#activeLayersTray').on('click', '.chip-remove-btn', function(e) {
+			e.stopPropagation();
+			var name = $(this).data('name');
+			$('input[name="' + name + '"]').prop('checked', false).trigger('change');
+		});
+
+		$('#btnClearTray').click(function(e) {
+			e.stopPropagation();
+			$('#selectNone').trigger('click');
+		});
+
+		// Search input interaction & clear button
+		$('.search-input').on('input', function() {
+			var val = $(this).val();
+			if (val && val.length > 0) {
+				$('#searchClearBtn').show();
+				$('#searchKbdHint').hide();
+			} else {
+				$('#searchClearBtn').hide();
+				$('#searchKbdHint').show();
+			}
+		});
+
+		$('#searchClearBtn').click(function() {
+			$('.search-input').val('').trigger('input').focus();
+			if (sidebarList) {
+				sidebarList.search();
+			}
+			applyCombinedFilters();
+		});
+
+		// Reset filters button in empty search state
+		$('.list-container').on('click', '#btnResetFilters', function() {
+			$('.search-input').val('');
+			$('#searchClearBtn').hide();
+			$('#searchKbdHint').show();
+			currentCategoryFilter = 'all';
+			$('.btn-cat-filter').removeClass('active');
+			$('.btn-cat-filter[data-cat="all"]').addClass('active');
+			$('#categoryActiveName').text('All Items');
+			activePresets = [];
+			$('.preset-chip').removeClass('active');
+			updatePresetBadges();
+			if (sidebarList) {
+				sidebarList.search();
+			}
+			applyCombinedFilters();
+		});
+
+		// Desktop Sidebar Toggle (maximizes map viewport)
+		function toggleDesktopSidebar() {
+			var sb = $('#sidebar');
+			sb.toggleClass('collapsed');
+			var isCollapsed = sb.hasClass('collapsed');
+			$('#desktopToggleText').text(isCollapsed ? 'Show Panel' : 'Hide Panel');
+			$('#desktopSidebarToggle').attr('title', isCollapsed ? 'Open Panel ( [ )' : 'Collapse Panel ( [ )');
+			setTimeout(function() {
+				map.invalidateSize();
+				scaleToFrame(false);
+			}, 260);
+		}
+
+		$('#desktopSidebarToggle, #collapseSidebarBtn').click(function() {
+			toggleDesktopSidebar();
+		});
+
+		// Keyboard Shortcuts Modal & Hotkeys
+		function openShortcutsModal() {
+			$('#shortcutsModalOverlay').fadeIn(150).css('display', 'flex');
+		}
+		function closeShortcutsModal() {
+			$('#shortcutsModalOverlay').fadeOut(150);
+		}
+
+		$('#shortcutsBtn').click(openShortcutsModal);
+		$('#closeShortcutsModal, #shortcutsModalOverlay').click(function(e) {
+			if (e.target === this) {
+				closeShortcutsModal();
+			}
+		});
+
+		$(document).keydown(function(e) {
+			var activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+			if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+				if (e.key === 'Escape') {
+					document.activeElement.blur();
+					if ($('.search-input').val()) {
+						$('#searchClearBtn').trigger('click');
+					}
+				}
+				return;
+			}
+
+			if (e.key === '[' || e.key === '\\') {
+				e.preventDefault();
+				if (window.innerWidth <= 768) {
+					if ($('#sidebar').hasClass('open')) {
+						closeMobileDrawer();
+					} else {
+						openMobileDrawer();
+					}
+				} else {
+					toggleDesktopSidebar();
+				}
+			} else if (e.key === '/') {
+				e.preventDefault();
+				$('.search-input').focus().select();
+			} else if (e.key === 'f' || e.key === 'F') {
+				e.preventDefault();
+				fitActiveMarkers(true);
+			} else if (e.key === 'r' || e.key === 'R') {
+				e.preventDefault();
+				scaleToFrame(true);
+			} else if (e.key === 'p' || e.key === 'P') {
+				e.preventDefault();
+				cyclePinSize();
+			} else if (e.key === 'Escape') {
+				if ($('#shortcutsModalOverlay').is(':visible')) {
+					closeShortcutsModal();
+				} else if ($('#sidebar').hasClass('open')) {
+					closeMobileDrawer();
+				}
+			}
+		});
+
+		// Handle region map change
+		$('#mapSelector').change(function() {
+			var val = $(this).val();
+			var newUrl = window.location.pathname + '?list=' + val;
+			window.history.pushState({ path: newUrl }, '', newUrl);
+			loadMapData(val);
+		});
+
+		// Parse initial query params
+		var urlParams = new URLSearchParams(window.location.search);
+		var initialList = urlParams.get('list') || 'map_locations';
+		$('#mapSelector').val(initialList);
+		loadMapData(initialList);
+
+		// ResizeObserver on the map container to ensure the map ALWAYS scales to fit
+		var resizeDebounceTimer = null;
+		var mapContainer = document.getElementById('botw_map');
+		if (window.ResizeObserver && mapContainer) {
+			var resizeObserver = new ResizeObserver(function() {
+				clearTimeout(resizeDebounceTimer);
+				resizeDebounceTimer = setTimeout(function() {
+					if (!map) return;
+					map.invalidateSize();
+					scaleMapToFit(false);
+				}, 100);
+			});
+			resizeObserver.observe(mapContainer);
+		}
+
+		// Window resize and orientation change fallbacks
+		window.addEventListener('resize', function() {
+			clearTimeout(resizeDebounceTimer);
+			resizeDebounceTimer = setTimeout(function() {
+				if (!map) return;
+				map.invalidateSize();
+				scaleMapToFit(false);
+			}, 100);
+		});
+
+		window.addEventListener('orientationchange', function() {
+			setTimeout(function() {
+				if (!map) return;
+				map.invalidateSize();
+				scaleMapToFit(false);
+			}, 250);
+		});
+
+		// Initialize default pin size to medium (10px)
+		setPinSize('medium');
+
+		// Progressive scaling sequence on startup to ensure full container fit
+		scaleMapToFit(false);
+		setTimeout(function() { scaleMapToFit(false); }, 100);
+		setTimeout(function() { scaleMapToFit(false); }, 350);
+		setTimeout(function() { scaleMapToFit(false); }, 750);
+	</script>
+</body>
 </html>

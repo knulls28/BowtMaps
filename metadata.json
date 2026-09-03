@@ -1,0 +1,8 @@
+{
+  "name": "Breath of the Wild Object Map",
+  "description": "Interactive object map for The Legend of Zelda: Breath of the Wild with markers, filters, presets, and clustering.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
