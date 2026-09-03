@@ -8,6 +8,10 @@
 	<meta property="og:title" content="Breath of the Wild Object Map">
 	<meta property="og:description" content="Interactive object map for The Legend of Zelda: Breath of the Wild with markers, filters, presets, and clustering.">
 	
+	<meta name="theme-color" content="#0d1219">
+	<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+	<link rel="icon" type="image/svg+xml" href="icon.svg">
+	
 	<script src="jquery-1.12.0.min.js"></script>
 	<link rel="stylesheet" href="leaflet.css" />
 	<link rel="stylesheet" href="MarkerCluster.css" />
@@ -104,6 +108,22 @@
 		.leaflet-touch .leaflet-bar a:hover {
 			background-color: rgba(37, 51, 71, 0.7) !important;
 			color: #7dd3fc !important;
+		}
+		/* Horizontal Zoom Controls (+ and - arranged side-by-side) */
+		.leaflet-control-zoom.leaflet-bar,
+		.leaflet-touch .leaflet-control-zoom.leaflet-bar {
+			display: inline-flex !important;
+			flex-direction: row !important;
+			align-items: center !important;
+		}
+		.leaflet-control-zoom.leaflet-bar a,
+		.leaflet-touch .leaflet-control-zoom.leaflet-bar a {
+			border-bottom: none !important;
+			border-right: 1px solid rgba(56, 189, 248, 0.22) !important;
+		}
+		.leaflet-control-zoom.leaflet-bar a:last-child,
+		.leaflet-touch .leaflet-control-zoom.leaflet-bar a:last-child {
+			border-right: none !important;
 		}
 		.leaflet-control-fit {
 			margin-top: 8px !important;
@@ -618,75 +638,146 @@
 			word-break: break-all;
 		}
 		
-		/* Category Filter Bar */
-		.category-filter-section {
+		/* Category Filter Button & Dropdown Drawer (Matches Options Button & Drawer) */
+		.category-dropdown-row {
 			margin-top: 8px;
 			display: flex;
-			flex-direction: column;
-			gap: 4px;
-		}
-		.category-section-label {
-			font-size: 10.5px;
-			font-weight: 600;
-			color: #64748b;
-			text-transform: uppercase;
-			letter-spacing: 0.5px;
-			display: flex;
-			justify-content: space-between;
 			align-items: center;
-		}
-		.category-filter-bar {
-			display: flex;
 			gap: 6px;
-			overflow-x: auto;
-			padding: 2px 2px 6px 2px;
-			scrollbar-width: thin;
-			scrollbar-color: #334155 transparent;
-			-webkit-overflow-scrolling: touch;
+			position: relative;
 		}
-		.category-filter-bar::-webkit-scrollbar {
-			height: 4px;
-		}
-		.category-filter-bar::-webkit-scrollbar-thumb {
-			background: #334155;
-			border-radius: 4px;
-		}
-		.btn-cat-filter {
-			display: inline-flex;
+		.btn-category-toggle {
+			flex: 1;
+			display: flex;
 			align-items: center;
-			gap: 5px;
-			padding: 4px 10px;
-			font-size: 11px;
-			font-weight: 500;
-			background: #182232;
+			justify-content: space-between;
+			background: #161e2b;
+			border: 1px solid #28374d;
+			border-radius: 6px;
+			height: 33px;
+			padding: 0 10px;
 			color: #94a3b8;
-			border: 1px solid #283548;
-			border-radius: 14px;
-			white-space: nowrap;
+			font-size: 11.5px;
+			font-weight: 500;
 			cursor: pointer;
 			transition: all 0.15s ease;
 			user-select: none;
+			text-align: left;
+		}
+		.btn-category-toggle:hover,
+		.btn-category-toggle.active {
+			background: #202d3f;
+			color: #38bdf8;
+			border-color: #38bdf8;
+		}
+		.btn-category-toggle.is-filtered {
+			border-color: #38bdf8;
+			background: rgba(2, 132, 199, 0.16);
+			color: #38bdf8;
+		}
+		.btn-category-toggle.active .options-chevron {
+			transform: rotate(180deg);
+		}
+		.category-btn-left {
+			display: flex;
+			align-items: center;
+			gap: 7px;
+			min-width: 0;
+			overflow: hidden;
+		}
+		.category-btn-icon {
+			font-size: 13px;
+			line-height: 1;
 			flex-shrink: 0;
 		}
-		.btn-cat-filter:hover {
+		.category-btn-label {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			color: #cbd5e1;
+		}
+		.btn-category-toggle:hover .category-btn-label,
+		.btn-category-toggle.active .category-btn-label,
+		.btn-category-toggle.is-filtered .category-btn-label {
+			color: #38bdf8;
+		}
+		.category-btn-right {
+			display: flex;
+			align-items: center;
+			gap: 6px;
+			flex-shrink: 0;
+			margin-left: 6px;
+		}
+		.category-drawer {
+			margin-top: 6px;
+		}
+		.category-chips-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 5px;
+			max-height: 180px;
+			overflow-y: auto;
+			padding-right: 2px;
+			scrollbar-width: thin;
+			scrollbar-color: #28374d transparent;
+		}
+		.category-chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 5px;
+			background: #171f2b;
+			border: 1px solid #28374d;
+			color: #cbd5e1;
+			border-radius: 12px;
+			padding: 4px 9px;
+			font-size: 11px;
+			cursor: pointer;
+			transition: all 0.12s ease;
+			user-select: none;
+		}
+		.category-chip:hover {
 			background: #222f42;
-			color: #e2e8f0;
 			border-color: #38bdf8;
-		}
-		.btn-cat-filter.active {
-			background: #0284c7;
 			color: #ffffff;
-			border-color: #38bdf8;
-			font-weight: 600;
-			box-shadow: 0 1px 4px rgba(2, 132, 199, 0.4);
 		}
-		.btn-cat-filter .cat-count {
-			font-size: 10px;
-			opacity: 0.85;
-			background: rgba(0, 0, 0, 0.3);
-			padding: 1px 5px;
+		.category-chip.active {
+			background: #0369a1;
+			border-color: #38bdf8;
+			color: #ffffff;
+			font-weight: 600;
+			box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
+		}
+		.category-chip-count {
+			background: rgba(15, 23, 42, 0.6);
+			padding: 0 5px;
 			border-radius: 8px;
-			font-weight: normal;
+			font-size: 9.5px;
+			color: #94a3b8;
+		}
+		.category-chip.active .category-chip-count {
+			background: rgba(255, 255, 255, 0.22);
+			color: #ffffff;
+		}
+		.btn-category-reset {
+			background: #161e2b;
+			border: 1px solid #28374d;
+			color: #94a3b8;
+			border-radius: 6px;
+			height: 33px;
+			padding: 0 8px;
+			font-size: 11px;
+			font-weight: 500;
+			cursor: pointer;
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			flex-shrink: 0;
+			transition: all 0.15s ease;
+		}
+		.btn-category-reset:hover {
+			background: #202d3f;
+			color: #38bdf8;
+			border-color: #38bdf8;
 		}
 
 		/* Category Badges */
@@ -714,6 +805,33 @@
 		.cat-field { background: rgba(20, 184, 166, 0.18); color: #2dd4bf; border: 1px solid rgba(20, 184, 166, 0.35); }
 		.cat-dlc { background: rgba(236, 72, 153, 0.18); color: #f472b6; border: 1px solid rgba(236, 72, 153, 0.35); }
 		.cat-system { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.35); }
+
+		/* Material Effect Badges */
+		.effect-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 3px;
+			font-size: 9.5px;
+			font-weight: 600;
+			padding: 1px 5.5px;
+			border-radius: 4px;
+			white-space: nowrap;
+			line-height: 1.4;
+			border: 1px solid rgba(56, 189, 248, 0.35);
+			background: rgba(56, 189, 248, 0.15);
+			color: #7dd3fc;
+		}
+		.effect-attackup { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+		.effect-defenseup { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-color: rgba(59, 130, 246, 0.4); }
+		.effect-movingspeed { background: rgba(245, 158, 11, 0.2); color: #fde047; border-color: rgba(245, 158, 11, 0.4); }
+		.effect-hearty { background: rgba(234, 179, 8, 0.22); color: #fef08a; border-color: rgba(234, 179, 8, 0.45); }
+		.effect-energizing { background: rgba(34, 197, 94, 0.2); color: #86efac; border-color: rgba(34, 197, 94, 0.4); }
+		.effect-enduring { background: rgba(202, 138, 4, 0.22); color: #fde68a; border-color: rgba(202, 138, 4, 0.45); }
+		.effect-spicy { background: rgba(249, 115, 22, 0.2); color: #fdba74; border-color: rgba(249, 115, 22, 0.4); }
+		.effect-chilly { background: rgba(6, 182, 212, 0.2); color: #a5f3fc; border-color: rgba(6, 182, 212, 0.4); }
+		.effect-electro { background: rgba(234, 179, 8, 0.2); color: #fde047; border-color: rgba(234, 179, 8, 0.4); }
+		.effect-sneaky { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border-color: rgba(168, 85, 247, 0.4); }
+		.effect-fireproof { background: rgba(225, 29, 72, 0.2); color: #fda4af; border-color: rgba(225, 29, 72, 0.4); }
 		
 		.itemName {
 			display: none;
@@ -1160,6 +1278,41 @@
 			font-weight: 600;
 			box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 		}
+
+		/* Badges */
+		
+		/* Offline Connectivity Toast */
+		.offline-toast {
+			position: fixed;
+			bottom: 16px;
+			left: 16px;
+			background: rgba(180, 83, 9, 0.92);
+			border: 1px solid #f59e0b;
+			color: #ffffff;
+			border-radius: 20px;
+			padding: 6px 14px;
+			font-size: 11.5px;
+			font-weight: 600;
+			box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6);
+			display: none;
+			align-items: center;
+			gap: 8px;
+			z-index: 2500;
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			animation: modalPop 0.2s ease;
+		}
+		.offline-toast-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: #ffffff;
+			animation: pulse 1.5s infinite;
+		}
+		@keyframes pulse {
+			0%, 100% { opacity: 1; transform: scale(1); }
+			50% { opacity: 0.4; transform: scale(0.85); }
+		}
 		
 		/* Loading Overlay */
 		#loading-overlay {
@@ -1336,10 +1489,23 @@
 				background-color: rgba(2, 132, 199, 0.65) !important;
 				color: #ffffff !important;
 			}
+			/* Horizontal zoom layout on touch/mobile screens */
+			.leaflet-control-zoom.leaflet-bar {
+				display: inline-flex !important;
+				flex-direction: row !important;
+				align-items: center !important;
+			}
+			.leaflet-control-zoom.leaflet-bar a {
+				border-bottom: none !important;
+				border-right: 1px solid rgba(56, 189, 248, 0.2) !important;
+			}
+			.leaflet-control-zoom.leaflet-bar a:last-child {
+				border-right: none !important;
+			}
 
 			/* Mobile Active Layers Tray Position - positioned cleanly below Leaflet zoom controls */
 			.active-layers-tray {
-				top: 112px;
+				top: 68px;
 				left: 12px;
 				right: 12px;
 				transform: none;
@@ -1491,6 +1657,23 @@
 				min-height: 44px;
 				font-size: 13.5px;
 				padding: 10px 12px;
+			}
+			.btn-category-toggle {
+				min-height: 40px;
+				font-size: 13px;
+			}
+			.category-drawer {
+				max-height: 280px;
+				overflow-y: auto;
+			}
+			.category-chip {
+				padding: 6px 10px;
+				font-size: 12px;
+			}
+			.btn-category-reset {
+				min-height: 40px;
+				padding: 0 10px;
+				font-size: 12px;
 			}
 			.actions-toolbar {
 				margin-top: 6px;
@@ -1683,9 +1866,35 @@
 					<kbd class="search-kbd-hint" id="searchKbdHint">/</kbd>
 				</div>
 				
-				<!-- Category Filter Section (Horizontal Scrollable Chips) -->
-				<div class="category-filter-section">
-					<div id="categoryFilterBar" class="category-filter-bar"></div>
+				<!-- Category Filter Button (Matches Options Button UI) -->
+				<div class="category-dropdown-row">
+					<button type="button" id="toggleCategoryBtn" class="btn btn-sm btn-options btn-category-toggle" title="Filter objects by category">
+						<div class="category-btn-left">
+							<span id="categoryBtnIcon" class="category-btn-icon">🌐</span>
+							<span id="categoryBtnLabel" class="category-btn-label">Category: All Items</span>
+						</div>
+						<div class="category-btn-right">
+							<span id="categoryActiveBadge" class="options-active-badge" style="display: none;">Active</span>
+							<svg class="options-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+						</div>
+					</button>
+					<button type="button" id="btnResetCategory" class="btn-category-reset" title="Reset category to All Items" style="display: none;" aria-label="Reset category to All Items">
+						<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+						<span>All</span>
+					</button>
+					<!-- Retained hidden select for backward-compatibility -->
+					<select id="categorySelect" style="display: none;" aria-hidden="true"></select>
+				</div>
+
+				<!-- Collapsible Category Drawer (Identical to Options Drawer) -->
+				<div id="categoryDrawer" class="options-drawer category-drawer" style="display: none;">
+					<div class="option-field">
+						<div class="option-header-row">
+							<span class="option-label">Filter by Category</span>
+							<button type="button" id="btnResetCategoryInDrawer" class="btn-link" style="display: none;">Reset to All Items</button>
+						</div>
+						<div id="categoryChipsContainer" class="category-chips-container"></div>
+					</div>
 				</div>
 
 				<!-- Quick Actions & Options Toolbar -->
@@ -1719,10 +1928,18 @@
 
 					<div class="option-field">
 						<div class="option-header-row">
-							<span class="option-label">Quick Presets</span>
-							<button type="button" id="btnResetPresets" class="btn-link" style="display: none;">Clear Presets</button>
+							<span class="option-label">Material Effects (Cooking &amp; Elixirs)</span>
+							<button type="button" id="btnResetPresets" class="btn-link" style="display: none;">Clear All Presets</button>
 						</div>
-						<div id="presetChipsContainer" class="preset-chips-container"></div>
+						<div id="materialEffectChipsContainer" class="preset-chips-container"></div>
+					</div>
+
+					<div class="option-field">
+						<div class="option-header-row">
+							<span class="option-label">World &amp; Object Presets</span>
+						</div>
+						<div id="worldPresetChipsContainer" class="preset-chips-container"></div>
+						<div id="presetChipsContainer" style="display: none;"></div>
 					</div>
 
 					<div class="option-field">
@@ -1757,9 +1974,6 @@
 			
 			<div class="list-container">
 				<ul class="list"></ul>
-				<div class="sidebar-footer">
-					Many objects are dynamically generated. Datamining details: <a href="https://mrcheeze.github.io/" target="_blank" rel="noreferrer">MrCheeze's GitHub</a> &amp; <a href="https://objmap.zeldamods.org/" target="_blank" rel="noreferrer">Leoetlino's object map</a>.
-				</div>
 			</div>
 
 			<div class="mobile-drawer-bottom">
@@ -1809,9 +2023,20 @@
 
 	<script>
 		var presets = {
-			"AttackUp": ["Animal_Insect_G", "Item_Plant_G", "Item_Fruit_H", "Item_Mushroom_L", "Animal_Fish_E", "Item_FishGet_E", "Animal_Insect_K", "Animal_Fish_F", "Item_FishGet_F"],
+			// Material Effects (Cooking & Elixirs)
+			"AttackUp": ["Item_Plant_G", "Item_Fruit_H", "Item_Mushroom_L", "Animal_Fish_E", "Item_FishGet_E", "Animal_Fish_F", "Item_FishGet_F", "Animal_Insect_K", "Animal_Insect_G"],
+			"DefenseUp": ["Item_Plant_H", "Item_Fruit_J", "Item_Mushroom_M", "Animal_Fish_G", "Item_FishGet_G", "Animal_Fish_H", "Animal_Insect_O", "Item_InsectGet_O", "Animal_Insect_P"],
 			"MovingSpeed": ["Animal_Insect_S", "Item_MushroomGet_D", "Item_Mushroom_D", "Item_PlantGet_M", "Item_Plant_M", "Animal_Insect_A", "Item_Plant_O", "Item_Fruit_E", "Item_PlantGet_O"],
+			"Hearty": ["Item_Fruit_D", "Item_Plant_B", "Item_PlantGet_B", "Item_Plant_C", "Item_Mushroom_F", "Item_Mushroom_N", "Item_Roast_05", "Animal_Fish_B", "Item_ChilledFish_06", "Animal_Fish_I", "Animal_Fish_K", "Animal_Insect_M"],
+			"Energizing": ["Item_Mushroom_A", "Animal_Fish_L", "Animal_Insect_H", "Animal_Insect_Z", "BeeHome"],
+			"Enduring": ["Item_Mushroom_O", "Item_Plant_Q", "Animal_Insect_AA", "Animal_Insect_B"],
+			"Spicy": ["Item_Fruit_I", "Item_Mushroom_C", "Item_Plant_F", "Animal_Insect_T", "Animal_Insect_Q", "Animal_Fish_J", "Item_FishGet_J"],
+			"Chilly": ["Item_Fruit_F", "Item_Mushroom_B", "Item_Plant_E", "Animal_Insect_C", "Animal_Insect_N", "Animal_Fish_C", "Item_FishGet_C"],
+			"Electro": ["Item_Fruit_C", "Item_Mushroom_H", "Item_Plant_L", "Animal_Insect_I", "Animal_Insect_R", "Animal_Fish_D"],
+			"Sneaky": ["Item_Mushroom_J", "Item_Plant_I", "Item_Plant_J", "Item_PlantGet_J", "Animal_Fish_M", "Animal_Insect_E", "Animal_Insect_EP"],
 			"Fireproof": ["Animal_Insect_X"],
+
+			// World & Object Presets
 			"Cooking Pots": ["Item_CookSet", "Item_CookSet_PanOnly"],
 			"Horses": ["WildHorseCreateTag", "WildHorseCreateTag01", "WildHorseCreateTag02", "WildHorseCreateTag03", "GameRomHorseBone", "GameRomHorseNushi", "GameRomHorseZelda", "GameRomHorse00L"],
 			"Overworld Bosses": [
@@ -2173,6 +2398,7 @@
 			var count = (locData && locData.locations) ? locData.locations.length : 0;
 			var familiarName = getFamiliarName(internal_name);
 			var cat = getItemCategory(internal_name, familiarName);
+			var effect = (window.BotwNaming && BotwNaming.getMaterialEffect) ? BotwNaming.getMaterialEffect(internal_name) : null;
 			var colorIdx = stringToValue(internal_name) % icons.length;
 			var isChecked = (internal_name in markers) && map.hasLayer(markers[internal_name]);
 			
@@ -2181,6 +2407,9 @@
 			s += '<div class="item-content">';
 			s += '<div class="item-header-row">';
 			s += '<span class="category-badge ' + cat.badgeClass + '" title="' + cat.name + '">' + cat.icon + ' ' + (cat.name.split(' ')[0]) + '</span> ';
+			if (effect) {
+				s += '<span class="effect-badge effect-' + effect.key.toLowerCase() + '" title="Cooking Effect: ' + effect.name + '">' + effect.icon + ' ' + effect.name + '</span> ';
+			}
 			s += '<span class="display-name">' + familiarName + '</span>';
 			s += '</div>';
 			if (familiarName !== internal_name) {
@@ -2191,7 +2420,7 @@
 			s += '<button type="button" class="btn-item-focus" data-name="' + internal_name + '" title="Zoom to object on map" aria-label="Focus on map">';
 			s += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>';
 			s += '</button>';
-			s += '<span class="itemName">' + familiarName + ' ' + internal_name + ' ' + cat.name + '</span></label></li>';
+			s += '<span class="itemName">' + familiarName + ' ' + internal_name + ' ' + cat.name + (effect ? (' ' + effect.name) : '') + '</span></label></li>';
 			return s;
 		}
 
@@ -2212,10 +2441,21 @@
 				}
 
 				if (hasPresets) {
+					var internalName = item.elm ? item.elm.getAttribute('data-name') : '';
 					var itemName = item.values().itemName;
-					var matched = regexList.some(function(regex) {
-						return regex.test(itemName);
-					});
+					var matched = false;
+					for (var p = 0; p < activePresets.length; p++) {
+						var pKey = activePresets[p];
+						var list = presets[pKey];
+						if (list && list.indexOf(internalName) !== -1) {
+							matched = true;
+							break;
+						}
+						if (regexList[p] && (regexList[p].test(internalName) || regexList[p].test(itemName))) {
+							matched = true;
+							break;
+						}
+					}
 					if (!matched) return false;
 				}
 
@@ -2226,7 +2466,7 @@
 			updateStats();
 		}
 
-		function renderCategoryPills(internal_names) {
+		function renderCategoryDropdown(internal_names) {
 			var counts = { all: internal_names.length };
 			internal_names.forEach(function(name) {
 				var fName = getFamiliarName(name);
@@ -2235,30 +2475,107 @@
 			});
 
 			var categories = window.BotwNaming ? BotwNaming.categories : [];
-			var html = categories.map(function(c) {
+			
+			// Update hidden select for backward-compatibility
+			var selectHtml = categories.map(function(c) {
 				var count = counts[c.key] || 0;
-				var activeClass = (c.key === currentCategoryFilter) ? ' active' : '';
-				return '<button type="button" class="btn-cat-filter' + activeClass + '" data-cat="' + c.key + '" title="' + c.label + ' (' + count + ' items)">' +
-					'<span>' + c.icon + '</span> ' +
-					'<span>' + c.name + '</span> ' +
-					'<span class="cat-count">' + count + '</span>' +
-					'</button>';
+				var isSelected = (c.key === currentCategoryFilter) ? ' selected' : '';
+				var displayName = (c.label || c.name);
+				return '<option value="' + c.key + '"' + isSelected + '>' +
+					c.icon + ' ' + displayName + ' (' + count.toLocaleString() + ')' +
+					'</option>';
 			}).join('');
+			$('#categorySelect').html(selectHtml);
 
-			$('#categoryFilterBar').html(html);
+			// Render category chips in drawer matching Options drawer preset chips
+			var chipsHtml = categories.map(function(c) {
+				var count = counts[c.key] || 0;
+				var isSelected = (c.key === currentCategoryFilter);
+				var displayName = (c.label || c.name);
+				return '<button type="button" class="preset-chip category-chip' + (isSelected ? ' active' : '') + '" data-category-key="' + c.key + '" title="Filter by ' + displayName + '">' +
+					'<span>' + c.icon + '</span>' +
+					'<span>' + displayName + '</span>' +
+					'<span class="category-chip-count">' + count.toLocaleString() + '</span>' +
+				'</button>';
+			}).join('');
+			$('#categoryChipsContainer').html(chipsHtml);
+
+			updateCategorySelectVisuals();
+		}
+		var renderCategoryPills = renderCategoryDropdown;
+
+		function updateCategorySelectVisuals() {
+			var cat = currentCategoryFilter || 'all';
+			var activeObj = window.BotwNaming ? BotwNaming.categories.find(function(c) { return c.key === cat; }) : null;
+			var icon = activeObj ? activeObj.icon : '🌐';
+			var label = activeObj ? (activeObj.label || activeObj.name) : 'All Items';
+
+			$('#categoryBtnIcon').text(icon);
+			$('#categoryBtnLabel').text('Category: ' + label);
+			$('#categorySelect').val(cat);
+			
+			// Highlight the selected chip
+			$('.category-chip').removeClass('active');
+			$('.category-chip[data-category-key="' + cat + '"]').addClass('active');
+
+			if (cat !== 'all') {
+				$('#btnResetCategory').show();
+				$('#btnResetCategoryInDrawer').show();
+				$('#categoryActiveBadge').text(label).show();
+				$('#toggleCategoryBtn').addClass('is-filtered');
+			} else {
+				$('#btnResetCategory').hide();
+				$('#btnResetCategoryInDrawer').hide();
+				$('#categoryActiveBadge').hide();
+				$('#toggleCategoryBtn').removeClass('is-filtered');
+			}
 		}
 
-		$('#categoryFilterBar').on('click', '.btn-cat-filter', function(e) {
+		// Toggle Category Drawer (Matches Options Drawer Dropdown)
+		$('#toggleCategoryBtn').on('click', function(e) {
 			e.preventDefault();
-			var cat = $(this).data('cat');
-			currentCategoryFilter = cat;
-			$('.btn-cat-filter').removeClass('active');
-			$(this).addClass('active');
-			
-			var activeObj = window.BotwNaming ? BotwNaming.categories.find(function(c) { return c.key === cat; }) : null;
-			$('#categoryActiveName').text(activeObj ? (activeObj.icon + ' ' + activeObj.label) : 'All Items');
-			
+			var drawer = $('#categoryDrawer');
+			var isOpen = drawer.is(':visible');
+			if (isOpen) {
+				drawer.slideUp(160);
+				$(this).removeClass('active');
+			} else {
+				// Close options drawer if it was open
+				$('#optionsDrawer').slideUp(160);
+				$('#toggleOptionsBtn').removeClass('active');
+
+				drawer.slideDown(160);
+				$(this).addClass('active');
+			}
+		});
+
+		// Category chip selection inside category drawer
+		$('#categoryChipsContainer').on('click', '.category-chip', function(e) {
+			e.preventDefault();
+			var key = $(this).data('category-key');
+			currentCategoryFilter = key;
+			updateCategorySelectVisuals();
 			applyCombinedFilters();
+			// Slide drawer closed upon selection
+			$('#categoryDrawer').slideUp(160);
+			$('#toggleCategoryBtn').removeClass('active');
+		});
+
+		// Hidden select change support
+		$('#categorySelect').on('change', function() {
+			currentCategoryFilter = $(this).val();
+			updateCategorySelectVisuals();
+			applyCombinedFilters();
+		});
+
+		// Reset category button
+		$('#btnResetCategory, #btnResetCategoryInDrawer').on('click', function(e) {
+			e.preventDefault();
+			currentCategoryFilter = 'all';
+			updateCategorySelectVisuals();
+			applyCombinedFilters();
+			$('#categoryDrawer').slideUp(160);
+			$('#toggleCategoryBtn').removeClass('active');
 		});
 
 		function updateActiveLayersTray() {
@@ -2409,6 +2726,7 @@
 				var targetLocations = locations[name].locations;
 				var familiarName = getFamiliarName(name);
 				var cat = getItemCategory(name, familiarName);
+				var effect = (window.BotwNaming && BotwNaming.getMaterialEffect) ? BotwNaming.getMaterialEffect(name) : null;
 				var newMarkers = targetLocations.map(function(target) {
 					var coords = map.unproject(target, 0);
 					var m = L.marker(coords, markerOptions);
@@ -2417,6 +2735,7 @@
 					var popupContent = '<div class="popup-sheikah-card">' +
 						'<div class="popup-header">' +
 						'<span class="category-badge ' + cat.badgeClass + '" style="font-size: 9px; padding: 1px 6px;">' + cat.icon + ' ' + cat.name + '</span>' +
+						(effect ? '<span class="effect-badge effect-' + effect.key.toLowerCase() + '" style="font-size: 9px; padding: 1px 6px;">' + effect.icon + ' ' + effect.name + '</span>' : '') +
 						'<span style="font-size: 10px; color: #64748b; font-family: ui-monospace, monospace;">#' + cat.key + '</span>' +
 						'</div>' +
 						'<div class="popup-title">' + familiarName + '</div>' +
@@ -2445,30 +2764,55 @@
 		// Modern Preset Chips System
 		var activePresets = [];
 		var presetMeta = {
-			"AttackUp": { icon: "⚔️", label: "Attack Up" },
-			"MovingSpeed": { icon: "⚡", label: "Speed Up" },
-			"Fireproof": { icon: "🔥", label: "Fireproof" },
-			"Cooking Pots": { icon: "🍳", label: "Cooking Pots" },
-			"Horses": { icon: "🐴", label: "Horses" },
-			"Overworld Bosses": { icon: "👹", label: "Bosses" },
-			"Treasure Chests": { icon: "💎", label: "Chests" },
-			"DLC": { icon: "👑", label: "DLC" },
-			"Koroks": { icon: "🌿", label: "Koroks" },
-			"Guardians": { icon: "🤖", label: "Guardians" },
-			"Weapons & Bows": { icon: "🏹", label: "Weapons" }
+			// Material Effects (Cooking & Elixirs)
+			"AttackUp": { icon: "⚔️", label: "Attack Up", group: "effects" },
+			"DefenseUp": { icon: "🛡️", label: "Defense Up", group: "effects" },
+			"MovingSpeed": { icon: "⚡", label: "Speed Up", group: "effects" },
+			"Hearty": { icon: "💛", label: "Hearty", group: "effects" },
+			"Energizing": { icon: "🟢", label: "Energizing", group: "effects" },
+			"Enduring": { icon: "🟡", label: "Enduring", group: "effects" },
+			"Spicy": { icon: "🌶️", label: "Cold Resist", group: "effects" },
+			"Chilly": { icon: "❄️", label: "Heat Resist", group: "effects" },
+			"Electro": { icon: "⚡", label: "Shock Resist", group: "effects" },
+			"Sneaky": { icon: "🤫", label: "Stealth Up", group: "effects" },
+			"Fireproof": { icon: "🔥", label: "Fireproof", group: "effects" },
+
+			// World & Object Presets
+			"Cooking Pots": { icon: "🍳", label: "Cooking Pots", group: "world" },
+			"Horses": { icon: "🐴", label: "Horses", group: "world" },
+			"Overworld Bosses": { icon: "👹", label: "Bosses", group: "world" },
+			"Treasure Chests": { icon: "💎", label: "Chests", group: "world" },
+			"DLC": { icon: "👑", label: "DLC", group: "world" },
+			"Koroks": { icon: "🌿", label: "Koroks", group: "world" },
+			"Guardians": { icon: "🤖", label: "Guardians", group: "world" },
+			"Weapons & Bows": { icon: "🏹", label: "Weapons", group: "world" }
 		};
 
 		function renderPresetChips() {
-			var container = $('#presetChipsContainer');
-			var html = Object.keys(presets).map(function(presetKey) {
-				var meta = presetMeta[presetKey] || { icon: "🏷️", label: presetKey };
-				var isActive = activePresets.indexOf(presetKey) !== -1;
-				return '<button type="button" class="preset-chip' + (isActive ? ' active' : '') + '" data-preset="' + presetKey + '" title="Filter by ' + meta.label + '">' +
-					'<span>' + meta.icon + '</span>' +
-					'<span>' + meta.label + '</span>' +
-					'</button>';
-			}).join('');
-			container.html(html);
+			var effectKeys = ["AttackUp", "DefenseUp", "MovingSpeed", "Hearty", "Energizing", "Enduring", "Spicy", "Chilly", "Electro", "Sneaky", "Fireproof"];
+			var worldKeys = ["Cooking Pots", "Horses", "Overworld Bosses", "Treasure Chests", "Koroks", "Guardians", "Weapons & Bows", "DLC"];
+
+			function buildChipsHtml(keys) {
+				return keys.map(function(presetKey) {
+					if (!presets[presetKey]) return '';
+					var meta = presetMeta[presetKey] || { icon: "🏷️", label: presetKey };
+					var isActive = activePresets.indexOf(presetKey) !== -1;
+					return '<button type="button" class="preset-chip' + (isActive ? ' active' : '') + '" data-preset="' + presetKey + '" title="Filter by ' + meta.label + '">' +
+						'<span>' + meta.icon + '</span>' +
+						'<span>' + meta.label + '</span>' +
+						'</button>';
+				}).join('');
+			}
+
+			if ($('#materialEffectChipsContainer').length) {
+				$('#materialEffectChipsContainer').html(buildChipsHtml(effectKeys));
+			}
+			if ($('#worldPresetChipsContainer').length) {
+				$('#worldPresetChipsContainer').html(buildChipsHtml(worldKeys));
+			}
+			if ($('#presetChipsContainer').length) {
+				$('#presetChipsContainer').html(buildChipsHtml(Object.keys(presets)));
+			}
 			updatePresetBadges();
 		}
 
@@ -2483,7 +2827,7 @@
 			}
 		}
 
-		$('#presetChipsContainer').on('click', '.preset-chip', function(e) {
+		$('#optionsDrawer').on('click', '.preset-chip', function(e) {
 			e.preventDefault();
 			var key = $(this).data('preset');
 			var idx = activePresets.indexOf(key);
@@ -2514,6 +2858,10 @@
 				drawer.slideUp(160);
 				$(this).removeClass('active');
 			} else {
+				// Close category drawer if open
+				$('#categoryDrawer').slideUp(160);
+				$('#toggleCategoryBtn').removeClass('active');
+
 				drawer.slideDown(160);
 				$(this).addClass('active');
 			}
@@ -2717,9 +3065,8 @@
 			$('#searchClearBtn').hide();
 			$('#searchKbdHint').show();
 			currentCategoryFilter = 'all';
-			$('.btn-cat-filter').removeClass('active');
-			$('.btn-cat-filter[data-cat="all"]').addClass('active');
-			$('#categoryActiveName').text('All Items');
+			$('#categorySelect').val('all');
+			updateCategorySelectVisuals();
 			activePresets = [];
 			$('.preset-chip').removeClass('active');
 			updatePresetBadges();
@@ -2860,6 +3207,15 @@
 		setTimeout(function() { scaleMapToFit(false); }, 100);
 		setTimeout(function() { scaleMapToFit(false); }, 350);
 		setTimeout(function() { scaleMapToFit(false); }, 750);
+
+		// Unregister any previously cached service workers
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.getRegistrations().then(function(registrations) {
+				for (var i = 0; i < registrations.length; i++) {
+					registrations[i].unregister();
+				}
+			});
+		}
 	</script>
 </body>
 </html>
