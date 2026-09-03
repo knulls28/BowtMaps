@@ -27,6 +27,22 @@ app.get('/map_locations.js', (req, res, next) => {
   next();
 });
 
+// Serve PWA manifest with correct content-type
+app.get(['/manifest.webmanifest', '/manifest.json'], (req, res) => {
+  res.type('application/manifest+json');
+  res.sendFile(path.join(__dirname, 'manifest.webmanifest'));
+});
+
+// Serve Service Worker with no-cache and root scope allowed
+app.get('/sw.js', (req, res) => {
+  res.set({
+    'Content-Type': 'application/javascript',
+    'Service-Worker-Allowed': '/',
+    'Cache-Control': 'no-cache, no-store, must-revalidate'
+  });
+  res.sendFile(path.join(__dirname, 'sw.js'));
+});
+
 // Serve static assets
 app.use(express.static(__dirname));
 
